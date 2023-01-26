@@ -1,0 +1,57 @@
+General: 
+  nTimesteps: 24 # number of timesteps per representative day
+  nReprDays: 8 # days
+  inflation: 0.02
+  discount_rate: 0.1
+
+ADMM:
+ rho_EOM: 0.5 # rho ADMM penalty term, EOM 
+ rho_H2: 1  # rho ADMM penalty term, H2
+ max_iter: 10000 # maximum number of iterations
+ epsilon: 1 # stopping criterion - tolerance on "accuracy" with which the coupling constraints are satisfied, expressed as percentage of initial imbalance (e.g., demand). Applied to dual and primal residuals.
+ CircularBufferSize: 2 # number of iterations for which data will be retained, should be at least 2 and less than max_iter
+
+EOM: 
+  SF: 1 # scale factor for sensitivity analysis
+
+H2:
+  demand: 50 # baseline demand for hydrogen, mtH2
+  conv_factor: 33 # 1 mt H2 = 33 TWh 
+
+HydrogenSector: 
+  electrolysis: # unless stated otherwise, based on EUR-pypsa_data
+   OC: 650 # M€/GW
+   Lifetime: 15 # Years 
+   efficiency_E_H2: 0.66 # efficiency conversion electricity to hydrogen 
+   EOM: "YES" # participates in EOM
+   H2: "YES" # participate in the H2 market
+
+# Unless stated otherwise, cost/tech data from EUR-PyPSA https://technology-data.readthedocs.io/en/latest/# 
+# Note all capacity values (power) are expressed in GW, whereas energy related values (energy) are expressed in TWh. All monetary values in M€.
+PowerSector: 
+ Biomass: 
+  VC: 50 # MEUR/TWh 
+  OC: 3381  # MEUR/GW
+  Lifetime: 25 # years
+  AF_ts: "NA" # key to find time series with historical output
+  EOM: "YES" # participates in EOM
+  H2: "NO" # participate in the carbon neutral H2 market
+
+ Solar:
+  VC: 2 # MEUR/TWh
+  OC: 529 # MEUR/GW
+  Lifetime: 30 # years - assumed 35 in EUR-PyPSA, seems too high
+  AF_ts: "SOLAR" # key to find time series with historical output
+  EOM: "YES" # participates in EOM
+  H2: "NO" # participate in the carbon neutral H2 market
+
+ WindOnshore:
+  VC: 5 # MEUR/TWh
+  OC: 1118 # MEUR/GW
+  Lifetime: 25 # years
+  AF_ts: "WIND_ONSHORE" # key to find time series with historical output
+  EOM: "YES" # participates in EOM
+  H2: "NO" # participate in the carbon neutral H2 market
+ 
+
+
