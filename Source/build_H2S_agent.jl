@@ -32,7 +32,7 @@ function build_h2s_agent!(m::String,mod::Model)
         # Definition of the objective function
         mod.ext[:objective] = @objective(mod, Min,
         + inv_cost # [MEUR]
-        - sum(W[jd]*(λ_EOM[jh,jd])*g[jh,jd] for jh in JH, jd in JD) # [MEUR]
+        - sum(W[jd]*(λ_EOM[jh,jd])*g[jh,jd] for jh in JH, jd in JD) # [MEUR] (λ in [MEUR/TWh]=[EUR/MWh])
         - sum(W[jd]*λ_H2[jh,jd]*gH[jh,jd] for jh in JH, jd in JD)
         + sum(ρ_EOM/2*W[jd]*(g[jh,jd] - g_bar[jh,jd])^2 for jh in JH, jd in JD)  
         + sum(ρ_H2/2*W[jd]*(gH[jh,jd] - gH_bar[jh,jd])^2 for jh in JH, jd in JD) 
@@ -42,7 +42,7 @@ function build_h2s_agent!(m::String,mod::Model)
 
         # Electricity consumption
         mod.ext[:constraints][:elec_consumption] = @constraint(mod, [jh=JH,jd=JD], 
-        -η_E_H2*g[jh,jd] <= capH/1000  # [TWh] SURE??
+        -η_E_H2*g[jh,jd] <= capH/1000  # [TWh]
         )
 
     elseif m == "H2storage"
@@ -74,13 +74,13 @@ function build_h2s_agent!(m::String,mod::Model)
 
         # Constraints
         mod.ext[:constraints][:dischargin_lim] = @constraint(mod, [jh=JH,jd=JD], 
-        dhH[jh,jd] <= capH )  # [TW/TWh?]
+        dhH[jh,jd] <= capH/1000 )  # [TWh]
         
         mod.ext[:constraints][:charging_lim] = @constraint(mod, [jh=JH,jd=JD], 
-        chH[jh,jd] <= capH ) # [TW/TWh?]
+        chH[jh,jd] <= capH/1000 ) # [TWh]
 
-        mod.ext[:constraints][:storage_balance] = @constraint(mod, [jh=JH,jd=JD],
-        sum(W[jd]*(η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh)) == 0 )
+        mod.ext[:constraints][:storage_balance] = @constraint(mod,
+        sum(W[jd]*(η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh) for jh in JH, jd in JD) == 0)
 
         mod.ext[:constraints][:SOC_update] = @constraint(mod, [jh=first(JH),jd=JD[2:1:end]],    # divided into two constraints to consider the first hour of the day that has to refer to the last one of the previous day
         SOC[jh,jd] == SOC[last(JH),jd-1] + η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh )

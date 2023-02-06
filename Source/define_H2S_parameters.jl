@@ -8,5 +8,7 @@ function define_H2S_parameters!(m::String,mod::Model, data::Dict)
         mod.ext[:parameters][:VC] = data["VC"]
         mod.ext[:parameters][:η_ch] = data["efficiency_ch"]
         mod.ext[:parameters][:η_dh] = data["efficiency_dh"]
+    #elseif m == "Edemand"
+     #   mod.ext[:parameters][:WTP] = data["WTP"]
     end
 end

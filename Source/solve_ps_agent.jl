@@ -1,4 +1,4 @@
-function solve_ps_agent!(mod::Model)
+function solve_ps_agent!(m::String,mod::Model)
     # Extract sets
     JH = mod.ext[:sets][:JH]
     JD = mod.ext[:sets][:JD]
@@ -23,7 +23,7 @@ function solve_ps_agent!(mod::Model)
     end
 
     # Update objective 
-    if mod.ext[:parameters][:EOM] == 1 && mod.ext[:parameters][:H2] == 1
+    if m == "electrolysis"
         
         mod.ext[:objective] = @objective(mod, Min,
         + tot_cost
@@ -32,6 +32,7 @@ function solve_ps_agent!(mod::Model)
         + sum(ρ_EOM / 2 * W[jd] * (g[jh, jd] - g_bar[jh, jd])^2 for jh in JH, jd in JD)
         + sum(ρ_H2 / 2 * W[jd] * (gH[jh,jd] - gH_bar[jh,jd])^2 for jh in JH, jd in JD) 
     )
+    #elseif for demand agent
     else
         
         mod.ext[:objective] = @objective(mod, Min,

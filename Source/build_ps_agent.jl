@@ -1,4 +1,4 @@
-function build_ps_agent!(mod::Model)
+function build_ps_agent!(m::String,mod::Model)
     # Extract sets
     JH = mod.ext[:sets][:JH]
     JD = mod.ext[:sets][:JD]
@@ -10,8 +10,10 @@ function build_ps_agent!(mod::Model)
     W = mod.ext[:parameters][:W] # weight of the representative days
     VC = mod.ext[:parameters][:VC] # variable costs
     IC = mod.ext[:parameters][:IC] # annuity investment costs
-    if mod.ext[:parameters][:EOM] == 1 && mod.ext[:parameters][:H2] == 1
+    if m == "electrolysis"
         η_H2_E = mod.ext[:parameters][:η_H2_E] # efficiency of hydrogen turbines
+    #elseif m == "Edemand"
+     #   mod.ext[:parameters][:WTP] = data["WTP"]
     end
 
     # ADMM algorithm parameters
@@ -22,6 +24,12 @@ function build_ps_agent!(mod::Model)
     g_bar = mod.ext[:parameters][:g_bar] # element in ADMM penalty term related to EOM
     ρ_EOM = mod.ext[:parameters][:ρ_EOM] # rho-value in ADMM related to EOM auctions
 
+    #if m == "Edemand"
+        # Create variables
+
+    #else
+    #end
+
     # Create variables
     cap = mod.ext[:variables][:cap] = @variable(mod, lower_bound = 0, base_name = "capacity")
     g = mod.ext[:variables][:g] = @variable(mod, [jh = JH, jd = JD], lower_bound = 0, base_name = "generation")
@@ -31,14 +39,14 @@ function build_ps_agent!(mod::Model)
         IC * cap + sum(W[jd] * VC * g[jh,jd] for jh in JH, jd in JD)
     )
 
-    if mod.ext[:parameters][:EOM] == 1 && mod.ext[:parameters][:H2] == 1
+    if m == "electrolysis"
         gH = mod.ext[:expressions][:gH] = @expression(mod,
           - g / η_H2_E
     )
     end
 
     # Objective 
-    if mod.ext[:parameters][:EOM] == 1 && mod.ext[:parameters][:H2] == 1
+    if m == "electrolysis"
         mod.ext[:objective] = @objective(mod, Min,
         + tot_cost
         - sum(W[jd] * λ_H2[jh, jd] * gH[jh, jd] for jh in JH, jd in JD)
@@ -46,6 +54,7 @@ function build_ps_agent!(mod::Model)
         + sum(ρ_EOM / 2 * W[jd] * (g[jh, jd] - g_bar[jh, jd])^2 for jh in JH, jd in JD)
         + sum(ρ_H2 / 2 * W[jd] * (gH[jh,jd] - gH_bar[jh,jd])^2 for jh in JH, jd in JD) 
     )
+    # elseif for demand agent
     else
         mod.ext[:objective] = @objective(mod, Min,
         + tot_cost

@@ -80,8 +80,8 @@ function solve_h2s_agent!(m::String,mod::Model)
       mod.ext[:constraints][:charging_lim] = @constraint(mod, [jh = JH, jd = JD],
       chH[jh, jd] <= capH) # [TW]
 
-      mod.ext[:constraints][:storage_balance] = @constraint(mod, [jh=JH,jd=JD],
-      sum(W[jd] * (η_ch * chH[jh, jd] - dhH[jh, jd] / η_dh)) == 0 )
+      mod.ext[:constraints][:storage_balance] = @constraint(mod,
+      sum(W[jd]*(η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh) for jh in JH, jd in JD) == 0 )
 
       mod.ext[:constraints][:SOC_update] = @constraint(mod, [jh=first(JH),jd=JD[2:1:end]],    # divided into two constraints to consider the first hour of the day that has to refer to the last one of the previous day
       SOC[jh,jd] == SOC[last(JH),jd-1] + η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh )

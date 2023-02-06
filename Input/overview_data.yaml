@@ -19,6 +19,12 @@ H2:
   conv_factor: 33 # 1 mt H2 = 33 TWh 
 
 HydrogenSector: 
+
+  H2demand:
+    EOM: "NO" # participates in EOM
+    H2: "YES" # participate in the carbon neutral H2 market
+    # WTP: 
+
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
    OC: 650 # M€/GW
    Lifetime: 15 # Years 
@@ -39,38 +45,40 @@ HydrogenSector:
 # Note all capacity values (power) are expressed in GW, whereas energy related values (energy) are expressed in TWh. All monetary values in M€.
 PowerSector:
 
- H2turbine:
-  VC: 70 # MEUR/TWh HP
-  OC: 400 # MEUR/GW HP
-  Lifetime: 25 # years
-  efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
-  AF_ts: "NA" # depend on hydrogen storage and electrolysis
-  EOM: "YES" # participates in EOM
-  H2: "YES" # participate in the carbon neutral H2 market
+  Edemand:
+    EOM: "YES" # participates in EOM
+    H2: "NO" # participate in the carbon neutral H2 market
+    # WTP:
 
- Biomass: 
-  VC: 50 # MEUR/TWh 
-  OC: 3381  # MEUR/GW
-  Lifetime: 25 # years
-  AF_ts: "NA" # key to find time series with historical output
-  EOM: "YES" # participates in EOM
-  H2: "NO" # participate in the carbon neutral H2 market
+  H2turbine:
+    VC: 70 # MEUR/TWh HP
+    OC: 400 # MEUR/GW HP
+    Lifetime: 25 # years
+    efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
+    AF_ts: "NA" # depend on hydrogen storage and electrolysis
+    EOM: "YES" # participates in EOM
+    H2: "YES" # participate in the carbon neutral H2 market
 
- Solar:
-  VC: 2 # MEUR/TWh
-  OC: 529 # MEUR/GW
-  Lifetime: 30 # years - assumed 35 in EUR-PyPSA, seems too high
-  AF_ts: "SOLAR" # key to find time series with historical output
-  EOM: "YES" # participates in EOM
-  H2: "NO" # participate in the carbon neutral H2 market
+  Biomass: 
+    VC: 50 # MEUR/TWh 
+    OC: 3381  # MEUR/GW
+    Lifetime: 25 # years
+    AF_ts: "NA" # key to find time series with historical output
+    EOM: "YES" # participates in EOM
+    H2: "NO" # participate in the carbon neutral H2 market
 
- WindOnshore:
-  VC: 5 # MEUR/TWh
-  OC: 1118 # MEUR/GW
-  Lifetime: 25 # years
-  AF_ts: "WIND_ONSHORE" # key to find time series with historical output
-  EOM: "YES" # participates in EOM
-  H2: "NO" # participate in the carbon neutral H2 market
- 
+  Solar:
+    VC: 2 # MEUR/TWh
+    OC: 529 # MEUR/GW
+    Lifetime: 30 # years - assumed 35 in EUR-PyPSA, seems too high
+    AF_ts: "SOLAR" # key to find time series with historical output
+    EOM: "YES" # participates in EOM
+    H2: "NO" # participate in the carbon neutral H2 market
 
-
+  WindOnshore:
+    VC: 5 # MEUR/TWh
+    OC: 1118 # MEUR/GW
+    Lifetime: 25 # years
+    AF_ts: "WIND_ONSHORE" # key to find time series with historical output
+    EOM: "YES" # participates in EOM
+    H2: "NO" # participate in the carbon neutral H2 market

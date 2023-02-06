@@ -17,7 +17,7 @@ end
 # Solve agents decision problems:
 if m in agents[:ps]
     @timeit TO_local "Solve power sector" begin
-        solve_ps_agent!(mod)  
+        solve_ps_agent!(m,mod)  
     end
 elseif m in agents[:h2s]
     @timeit TO_local "Solve hydrogen sector" begin

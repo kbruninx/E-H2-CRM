@@ -86,7 +86,7 @@ define_H2_parameters!(H2,merge(data["General"],data["H2"]),ts,repr_days)
 # parameters agents
 for m in agents[:ps]
     define_common_parameters!(m,mdict[m],merge(data["General"],data["ADMM"],data["PowerSector"][m]),ts,repr_days,agents)     # Parameters common to all agents
-    define_ps_parameters!(mdict[m],merge(data["General"],data["PowerSector"][m]),ts,repr_days)                               # Power sector
+    define_ps_parameters!(m,mdict[m],merge(data["General"],data["PowerSector"][m]),ts,repr_days)                               # Power sector
 end
 for m in agents[:h2s]
     define_common_parameters!(m,mdict[m],merge(data["General"],data["ADMM"],data["HydrogenSector"][m]),ts,repr_days,agents)  # Parameters common to all agents
@@ -102,7 +102,7 @@ println("   ")
 
 ## 4. Build models
 for m in agents[:ps]
-    build_ps_agent!(mdict[m])
+    build_ps_agent!(m,mdict[m])
 end
 for m in agents[:h2s]
     build_h2s_agent!(m,mdict[m])
