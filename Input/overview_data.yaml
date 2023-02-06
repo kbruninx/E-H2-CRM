@@ -20,9 +20,9 @@ H2:
 
 HydrogenSector: 
 
-  H2demand:
-    EOM: "NO" # participates in EOM
-    H2: "YES" # participate in the carbon neutral H2 market
+  #H2demand:
+   # EOM: "NO" # participates in EOM
+   # H2: "YES" # participate in the carbon neutral H2 market
     # WTP: 
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
@@ -48,7 +48,7 @@ PowerSector:
   Edemand:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
-    # WTP:
+    WTP: 3000 # EUR/MWh
 
   H2turbine:
     VC: 70 # MEUR/TWh HP

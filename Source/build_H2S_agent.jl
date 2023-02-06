@@ -59,9 +59,10 @@ function build_h2s_agent!(m::String,mod::Model)
         dhH = mod.ext[:variables][:dhH] = @variable(mod, [jh=JH,jd=JD], lower_bound=0, base_name="hydrogen_discharging")
         SOC = mod.ext[:variables][:SOC] = @variable(mod, [jh=JH,jd=JD], lower_bound=0, base_name="state_of_charge")
 
+
         # Create affine expressions  
         inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC*capH) # add a term for volume in overview_data
-        SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch*chH - dhH/η_dh) # state of charge update
+        # SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch*chH - dhH/η_dh) # state of charge update
         gH = mod.ext[:expressions][:gH]  = @expression(mod, dhH-chH);
 
         # Definition of the objective function
@@ -90,6 +91,9 @@ function build_h2s_agent!(m::String,mod::Model)
     
         mod.ext[:constraints][:SOC_limit] = @constraint(mod, [jh = JH, jd = JD],
         SOC[jh, jd] <= volH)
+       
+        mod.ext[:constraints][:SOC_0] = @constraint(mod,
+        SOC[1,1] == 0)
 
     end
     

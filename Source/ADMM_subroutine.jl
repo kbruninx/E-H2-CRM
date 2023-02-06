@@ -32,6 +32,11 @@ end
     end
     if mod.ext[:parameters][:H2] == 1
         push!(results["h2"][m], collect(value.(mod.ext[:expressions][:gH])))
+        if m == "H2storage"
+            push!(results["SOC"], collect(value.(mod.ext[:variables][:SOC])))
+            push!(results["dhH"], collect(value.(mod.ext[:variables][:dhH])))
+            push!(results["chH"], collect(value.(mod.ext[:variables][:chH])))
+        end
     end                     
 end
 

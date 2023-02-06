@@ -22,28 +22,21 @@ function solve_h2s_agent!(m::String,mod::Model)
       η_E_H2 = mod.ext[:parameters][:η_E_H2] # efficiency electrolysis
 
       # Decision variables
-      capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound = 0, base_name = "capacity")
-      g = mod.ext[:variables][:g] = @variable(mod, [jh = JH, jd = JD], upper_bound = 0, base_name = "demand_electricity_hydrogen") # note this is defined as a negative number, consumption
+      capH = mod.ext[:variables][:capH] 
+      g = mod.ext[:variables][:g]  # note this is defined as a negative number, consumption
 
       # Create affine expressions  
-      inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * capH)
+      inv_cost = mod.ext[:expressions][:inv_cost]
 
-      gH = mod.ext[:expressions][:gH] = @expression(mod, -η_E_H2 * g) # [TWh]
+      gH = mod.ext[:expressions][:gH] # [TWh]
 
       # Update objective function
       mod.ext[:objective] = @objective(mod, Min,
-         +inv_cost # [MEUR]
+         + inv_cost # [MEUR]
          - sum(W[jd] * (λ_EOM[jh, jd]) * g[jh, jd] for jh in JH, jd in JD) # [MEUR]
          - sum(W[jd] * λ_H2[jh, jd] * gH[jh, jd] for jh in JH, jd in JD)
          + sum(ρ_EOM / 2 * W[jd] * (g[jh, jd] - g_bar[jh, jd])^2 for jh in JH, jd in JD)
          + sum(ρ_H2 / 2 * W[jd] * (gH[jh, jd] - gH_bar[jh, jd])^2 for jh in JH, jd in JD)
-      )
-
-      # Constraints
-
-      # Electricity consumption
-      mod.ext[:constraints][:elec_consumption] = @constraint(mod, [jh = JH, jd = JD],
-         -η_E_H2 * g[jh, jd] <= capH / 1000  # [TWh] SURE??
       )
 
    elseif m == "H2storage"
@@ -54,43 +47,24 @@ function solve_h2s_agent!(m::String,mod::Model)
       η_dh = mod.ext[:parameters][:η_dh] # discharging efficiency
 
       # Decision variables
-      capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound = 0, base_name = "capacity")
-      volH = mod.ext[:variables][:volH] = @variable(mod, lower_bound = 0, base_name = "volume")
-      chH = mod.ext[:variables][:chH] = @variable(mod, [jh = JH, jd = JD], lower_bound = 0, base_name = "hydrogen_charging")
-      dhH = mod.ext[:variables][:dhH] = @variable(mod, [jh = JH, jd = JD], lower_bound = 0, base_name = "hydrogen_discharging")
-      SOC = mod.ext[:variables][:SOC] = @variable(mod, [jh = JH, jd = JD], lower_bound = 0, base_name = "state_of_charge")
+      capH = mod.ext[:variables][:capH] 
+      volH = mod.ext[:variables][:volH] 
+      chH = mod.ext[:variables][:chH] 
+      dhH = mod.ext[:variables][:dhH] 
+      SOC = mod.ext[:variables][:SOC]
 
       # Create affine expressions  
-      inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * capH) # add a term for volume
-      SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch * chH - dhH / η_dh) # state of charge update
-      gH = mod.ext[:expressions][:gH]  = @expression(mod, dhH-chH);
+      inv_cost = mod.ext[:expressions][:inv_cost]  # add a term for volume
+      # SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch * chH - dhH / η_dh) # state of charge update
+      gH = mod.ext[:expressions][:gH] 
 
       # Update objective function
       mod.ext[:objective] = @objective(mod, Min,
-         +inv_cost # [MEUR]
+         + inv_cost # [MEUR]
          - sum(W[jd] * (λ_H2[jh, jd]) * dhH[jh, jd] for jh in JH, jd in JD) # [MEUR]
          + sum(W[jd] * λ_H2[jh, jd] * chH[jh, jd] for jh in JH, jd in JD)
          + sum(ρ_H2 / 2 * W[jd] * (gH[jh, jd] - gH_bar[jh, jd])^2 for jh in JH, jd in JD)
       )
-
-      # Constraints
-      mod.ext[:constraints][:dischargin_lim] = @constraint(mod, [jh = JH, jd = JD],
-      dhH[jh, jd] <= capH)  # [TW]
-
-      mod.ext[:constraints][:charging_lim] = @constraint(mod, [jh = JH, jd = JD],
-      chH[jh, jd] <= capH) # [TW]
-
-      mod.ext[:constraints][:storage_balance] = @constraint(mod,
-      sum(W[jd]*(η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh) for jh in JH, jd in JD) == 0 )
-
-      mod.ext[:constraints][:SOC_update] = @constraint(mod, [jh=first(JH),jd=JD[2:1:end]],    # divided into two constraints to consider the first hour of the day that has to refer to the last one of the previous day
-      SOC[jh,jd] == SOC[last(JH),jd-1] + η_ch*chH[jh,jd] - dhH[jh,jd]/η_dh )
-
-      mod.ext[:constraints][:SOC_update] = @constraint(mod, [jh=JH[2:1:end],jd=JD], 
-      SOC[jh, jd] == SOC[jh-1, jd] + η_ch * chH[jh, jd] - dhH[jh, jd] / η_dh ) 
-
-      mod.ext[:constraints][:SOC_limit] = @constraint(mod, [jh = JH, jd = JD],
-      SOC[jh, jd] <= volH )
    end
     
    # solve problem

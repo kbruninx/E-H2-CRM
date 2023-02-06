@@ -102,7 +102,7 @@ println("   ")
 
 ## 4. Build models
 for m in agents[:ps]
-    build_ps_agent!(m,mdict[m])
+    build_ps_agent!(m,mdict[m],EOM)
 end
 for m in agents[:h2s]
     build_h2s_agent!(m,mdict[m])
