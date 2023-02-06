@@ -21,7 +21,7 @@ if m in agents[:ps]
     end
 elseif m in agents[:h2s]
     @timeit TO_local "Solve hydrogen sector" begin
-        solve_h2s_agent!(mod)  
+        solve_h2s_agent!(m,mod)  
     end
 end
 
@@ -31,7 +31,7 @@ end
         push!(results["g"][m], collect(value.(mod.ext[:variables][:g])))
     end
     if mod.ext[:parameters][:H2] == 1
-        push!(results["h2"][m], collect(value.(mod.ext[:variables][:gH])))
+        push!(results["h2"][m], collect(value.(mod.ext[:expressions][:gH])))
     end                     
 end
 

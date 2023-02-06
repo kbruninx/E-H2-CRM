@@ -26,9 +26,28 @@ HydrogenSector:
    EOM: "YES" # participates in EOM
    H2: "YES" # participate in the H2 market
 
+  H2storage:
+   VC: 5.5 #M€/TWh
+   OC: 200 # M€/GW  NEED REF
+   Lifetime: 30 # Years 
+   efficiency_ch: 0.99 # charging efficiency
+   efficiency_dh: 0.99 # discharging efficiency
+   EOM: "NO" # participates in EOM
+   H2: "YES" # participate in the H2 market
+
 # Unless stated otherwise, cost/tech data from EUR-PyPSA https://technology-data.readthedocs.io/en/latest/# 
 # Note all capacity values (power) are expressed in GW, whereas energy related values (energy) are expressed in TWh. All monetary values in M€.
-PowerSector: 
+PowerSector:
+
+ H2turbine:
+  VC: 70 # MEUR/TWh HP
+  OC: 400 # MEUR/GW HP
+  Lifetime: 25 # years
+  efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
+  AF_ts: "NA" # depend on hydrogen storage and electrolysis
+  EOM: "YES" # participates in EOM
+  H2: "YES" # participate in the carbon neutral H2 market
+
  Biomass: 
   VC: 50 # MEUR/TWh 
   OC: 3381  # MEUR/GW

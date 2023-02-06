@@ -1,4 +1,4 @@
-## Topic: EU ETS, MSR and overlapping policies
+## Topic: Hydrogen market for long-term storage
 # Author: Kenneth Bruninx
 # Last update: January 2023
 
@@ -90,7 +90,7 @@ for m in agents[:ps]
 end
 for m in agents[:h2s]
     define_common_parameters!(m,mdict[m],merge(data["General"],data["ADMM"],data["HydrogenSector"][m]),ts,repr_days,agents)  # Parameters common to all agents
-    define_H2S_parameters!(mdict[m],merge(data["General"],data["HydrogenSector"][m]))                                        # Hydrogen sector
+    define_H2S_parameters!(m,mdict[m],merge(data["General"],data["HydrogenSector"][m]))                                        # Hydrogen sector
 end
 
 # Calculate number of agents in each market
@@ -105,7 +105,7 @@ for m in agents[:ps]
     build_ps_agent!(mdict[m])
 end
 for m in agents[:h2s]
-    build_h2s_agent!(mdict[m])
+    build_h2s_agent!(m,mdict[m])
 end
 
 println("Build model: done")
