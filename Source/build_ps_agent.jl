@@ -46,12 +46,12 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         g[jh, jd] <= AF[jh, jd] * cap / 1000 )  # scaling factor needed to go from GW -> TWh
 
     elseif m == "Edemand"
+        # Define parameters and expressions
+        WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
+
         # Create variables
         g = mod.ext[:variables][:g] = @variable(mod, [jh = JH, jd = JD], upper_bound = 0, base_name = "generation")
         # g for demand agent is defined as negative
-
-        # Define parameters and expressions
-        WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
 
         # Objective 
         mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)

@@ -20,24 +20,30 @@ H2:
 
 HydrogenSector: 
 
-  #H2demand:
-   # EOM: "NO" # participates in EOM
-   # H2: "YES" # participate in the carbon neutral H2 market
-    # WTP: 
+  H2demand:
+   EOM: "NO" # participates in EOM
+   H2: "YES" # participate in the carbon neutral H2 market
+   WTP: 100  # NEED REF
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
-   OC: 650 # M€/GW
+   OC: 650 # M€/GW - could be a little bit higher
    Lifetime: 15 # Years 
    efficiency_E_H2: 0.66 # efficiency conversion electricity to hydrogen 
    EOM: "YES" # participates in EOM
    H2: "YES" # participate in the H2 market
 
   H2storage:
-   VC: 5.5 #M€/TWh
-   OC: 200 # M€/GW  NEED REF
-   Lifetime: 30 # Years 
-   efficiency_ch: 0.99 # charging efficiency
-   efficiency_dh: 0.99 # discharging efficiency
+   VC: 5.5 # M€/TWh could account for cost of electrcity, do we need to include it?
+   OC_cap: 130 # M€/GW - 4200000 eur/t/h = 4200000eur / (33 MWh/t * 1t/h) = 127270 EUR/MW = 130 MEUR/GW
+       # costs of compressor 
+   OC_vol: 500 # MEUR/TWh = 0.5 EUR/kWh
+   # OC_vol: 145 # MEUR/TWh
+       # OC_vol_+_gas_treatment: 2524800 MEUR/Mton = 2524800/33 MEUR/TWh = 76510 MEUR/TWh -- costs of salt cavern (4800eur/t)
+       # + costs of gas treatment (2520000 eur/t) pp.150-151 TNO 2020 report
+       # OC_vol = 4800 MEUR/Mton = 4800 / 33 MEUR/TWh = 145 MEUR/TWh
+   Lifetime: 40 # Years 
+   efficiency_ch: 0.99 # charging efficiency (needed?)
+   efficiency_dh: 0.99 # discharging efficiency (needed?)
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the H2 market
 
@@ -48,11 +54,11 @@ PowerSector:
   Edemand:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
-    WTP: 3000 # EUR/MWh
+    WTP: 2000 # EUR/MWh = MEUR/TWh
 
   H2turbine:
-    VC: 70 # MEUR/TWh HP
-    OC: 400 # MEUR/GW HP
+    VC: 2 # MEUR/TWh
+    OC: 1200 # MEUR/GW
     Lifetime: 25 # years
     efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
     AF_ts: "NA" # depend on hydrogen storage and electrolysis

@@ -5,7 +5,6 @@ function build_h2s_agent!(m::String,mod::Model)
        
     # Extract common parameters
     W = mod.ext[:parameters][:W] # weight of the representative days
-    IC = mod.ext[:parameters][:IC] # annuity investment costs
 
     # ADMM algorithm parameters
     λ_EOM = mod.ext[:parameters][:λ_EOM] # EOM prices
@@ -16,10 +15,27 @@ function build_h2s_agent!(m::String,mod::Model)
     ρ_H2 = mod.ext[:parameters][:ρ_H2] # rho-value in ADMM related to H2 market
     
 
-    if m == "electrolysis" 
+    if m == "H2demand"
+        # Extract parameters
+        WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
+
+        # Create variables
+        gH = mod.ext[:variables][:gH] = @variable(mod, [jh = JH, jd = JD], upper_bound = 0, base_name = "hydrogen_demand")
+        # gH for demand agent is defined as negative
+
+        # Objective 
+        mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
+        sum(W[jd] * (WTP - λ_H2[jh, jd]) * gH[jh,jd] for jh in JH, jd in JD))  # N.B. g is negative here
+
+        # Maximux demand constraint
+        mod.ext[:constraints][:demand_limit] = @constraint(mod, [jh = JH, jd = JD],
+        gH[jh, jd] >= - H2["D"][jh, jd])   # again, g is negative
+
+    elseif m == "electrolysis" 
 
         # Extract parameters
         η_E_H2 = mod.ext[:parameters][:η_E_H2] # efficiency electrolysis
+        IC = mod.ext[:parameters][:IC] # annuity investment costs
 
         # Decision variables
         capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound=0, base_name="capacity")
@@ -51,18 +67,19 @@ function build_h2s_agent!(m::String,mod::Model)
         VC = mod.ext[:parameters][:VC] # variable cost storage
         η_ch = mod.ext[:parameters][:η_ch] # charging efficiency 
         η_dh = mod.ext[:parameters][:η_dh] # discharging efficiency
+        IC_cap = mod.ext[:parameters][:IC_cap] # annuity investment cost for capacity
+        IC_vol = mod.ext[:parameters][:IC_vol] # annuity investment cost for volume
 
         # Decision variables
-        capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound=0, base_name="capacity")
-        volH = mod.ext[:variables][:volH] = @variable(mod, lower_bound=0, base_name="volume")
+        capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound=0, base_name="capacity") # GW
+        volH = mod.ext[:variables][:volH] = @variable(mod, lower_bound=0, base_name="volume") # TWh
         chH = mod.ext[:variables][:chH] = @variable(mod, [jh=JH,jd=JD], lower_bound=0, base_name="hydrogen_charging")
         dhH = mod.ext[:variables][:dhH] = @variable(mod, [jh=JH,jd=JD], lower_bound=0, base_name="hydrogen_discharging")
         SOC = mod.ext[:variables][:SOC] = @variable(mod, [jh=JH,jd=JD], lower_bound=0, base_name="state_of_charge")
 
 
         # Create affine expressions  
-        inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC*capH) # add a term for volume in overview_data
-        # SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch*chH - dhH/η_dh) # state of charge update
+        inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC_cap*capH + IC_vol*volH)
         gH = mod.ext[:expressions][:gH]  = @expression(mod, dhH-chH);
 
         # Definition of the objective function

@@ -19,7 +19,7 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
             # Imbalances 
             @timeit TO "Compute imbalances" begin
                 push!(ADMM["Imbalances"]["EOM"], sum(results["g"][m][end] for m in agents[:eom]))
-                push!(ADMM["Imbalances"]["H2"], sum(results["h2"][m][end] for m in agents[:h2]) - H2["D"][:,:])
+                push!(ADMM["Imbalances"]["H2"], sum(results["h2"][m][end] for m in agents[:h2]))
             end
 
             # Primal residuals 

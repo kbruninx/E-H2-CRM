@@ -5,7 +5,6 @@ function solve_h2s_agent!(m::String,mod::Model)
 
    # Extract common parameters
    W = mod.ext[:parameters][:W] # weight of the representative days
-   IC = mod.ext[:parameters][:IC] # annuity investment costs
 
    # ADMM algorithm parameters
    λ_EOM = mod.ext[:parameters][:λ_EOM] # EOM prices
@@ -15,10 +14,21 @@ function solve_h2s_agent!(m::String,mod::Model)
    gH_bar = mod.ext[:parameters][:gH_bar] # element in ADMM penalty term related to hydrogen market
    ρ_H2 = mod.ext[:parameters][:ρ_H2] # rho-value in ADMM related to H2 market
 
+   if m == "H2demand"
+      # Extract parameters
+      WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
 
-   if m == "electrolysis"  # NOT SURE IT WORKS
+      # Decision variables
+      gH = mod.ext[:variables][:gH] # negative
+
+      # Update objective function 
+      mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
+      sum(W[jd] * (WTP - λ_H2[jh, jd]) * gH[jh,jd] for jh in JH, jd in JD))  # N.B. g is negative here
+
+   elseif m == "electrolysis"  # NOT SURE IT WORKS
 
       # Extract parameters
+      IC = mod.ext[:parameters][:IC] # annuity investment costs
       η_E_H2 = mod.ext[:parameters][:η_E_H2] # efficiency electrolysis
 
       # Decision variables
@@ -27,7 +37,6 @@ function solve_h2s_agent!(m::String,mod::Model)
 
       # Create affine expressions  
       inv_cost = mod.ext[:expressions][:inv_cost]
-
       gH = mod.ext[:expressions][:gH] # [TWh]
 
       # Update objective function
@@ -45,6 +54,8 @@ function solve_h2s_agent!(m::String,mod::Model)
       VC = mod.ext[:parameters][:VC] # variable cost storage
       η_ch = mod.ext[:parameters][:η_ch] # charging efficiency 
       η_dh = mod.ext[:parameters][:η_dh] # discharging efficiency
+      IC_cap = mod.ext[:parameters][:IC_cap] # annuity investment cost for capacity
+      IC_vol = mod.ext[:parameters][:IC_vol] # annuity investment cost for volume
 
       # Decision variables
       capH = mod.ext[:variables][:capH] 
@@ -54,7 +65,7 @@ function solve_h2s_agent!(m::String,mod::Model)
       SOC = mod.ext[:variables][:SOC]
 
       # Create affine expressions  
-      inv_cost = mod.ext[:expressions][:inv_cost]  # add a term for volume
+      inv_cost = mod.ext[:expressions][:inv_cost]
       # SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch * chH - dhH / η_dh) # state of charge update
       gH = mod.ext[:expressions][:gH] 
 
