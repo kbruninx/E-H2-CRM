@@ -17,29 +17,30 @@ end
 # Solve agents decision problems:
 if m in agents[:ps]
     @timeit TO_local "Solve power sector" begin
-        solve_ps_agent!(m,mod)  
+        solve_ps_agent!(m,mod,EOM)  
     end
 elseif m in agents[:h2s]
     @timeit TO_local "Solve hydrogen sector" begin
-        solve_h2s_agent!(m,mod)  
+        solve_h2s_agent!(m,mod,H2)  
     end
 end
 
 # Query results
 @timeit TO_local "Query results" begin
     if mod.ext[:parameters][:EOM] == 1
-        push!(results["g"][m], collect(value.(mod.ext[:variables][:g])))
+        if m == "Edemand"
+            push!(results["g"][m], collect(value.(mod.ext[:expressions][:g])))
+        else
+            push!(results["g"][m], collect(value.(mod.ext[:variables][:g])))
+        end
     end
     if mod.ext[:parameters][:H2] == 1
-        if m == "H2demand"
-            push!(results["h2"][m], collect(value.(mod.ext[:variables][:gH])))
-        else
-            push!(results["h2"][m], collect(value.(mod.ext[:expressions][:gH])))
-            if m == "H2storage"
-                push!(results["SOC"], collect(value.(mod.ext[:variables][:SOC])))
-                push!(results["dhH"], collect(value.(mod.ext[:variables][:dhH])))
-                push!(results["chH"], collect(value.(mod.ext[:variables][:chH])))
-            end
+        push!(results["h2"][m], collect(value.(mod.ext[:expressions][:gH])))
+        if m == "H2storage"
+            push!(results["SOC"], collect(value.(mod.ext[:variables][:SOC])))
+            push!(results["SOC_AD_0"], collect(value.(mod.ext[:variables][:SOC_AD_0])))
+            push!(results["dhH"], collect(value.(mod.ext[:variables][:dhH])))
+            push!(results["chH"], collect(value.(mod.ext[:variables][:chH])))
         end
     end                     
 end

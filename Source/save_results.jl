@@ -18,6 +18,9 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     end
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("capacity_ps.csv")), DataFrame(transpose(cap),:auto), delim=";",header=string.("CAP_",agents[:ps]));
 
+    ENS = EOM["D"] + results["g"]["Edemand"][end]
+    CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("ENS_el.csv")), DataFrame(ENS,:auto), delim=";");
+
     # Electricity prices
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("electricity_price.csv")), DataFrame(results["λ"]["EOM"][end],:auto), delim=";");
 
@@ -26,6 +29,7 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
 
     # Hydrogen sector
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("SOC",agents[:h2s][3],".csv")), DataFrame(results["SOC"][end],:auto), delim=";");
+    CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("SOC_AD_0",agents[:h2s][3],".csv")), DataFrame(results["SOC_AD_0"][end]',:auto), delim=";");
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Charge",agents[:h2s][3],".csv")), DataFrame(results["chH"][end],:auto), delim=";");
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Discharge",agents[:h2s][3],".csv")), DataFrame(results["dhH"][end],:auto), delim=";");
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("demand_H2s.csv")), DataFrame(H2["D"],:auto), delim=";");

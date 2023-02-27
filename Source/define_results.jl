@@ -15,6 +15,8 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
         if m == "H2storage"
             results["SOC"] = CircularBuffer{Array{Float64,2}}(data["CircularBufferSize"])
             push!(results["SOC"], zeros(data["nTimesteps"], data["nReprDays"]))
+            results["SOC_AD_0"] = CircularBuffer{Array{Float64,1}}(data["CircularBufferSize"])
+            push!(results["SOC_AD_0"], zeros(data["nDays"]))
             results["dhH"] = CircularBuffer{Array{Float64,2}}(data["CircularBufferSize"])
             push!(results["dhH"], zeros(data["nTimesteps"], data["nReprDays"]))
             results["chH"] = CircularBuffer{Array{Float64,2}}(data["CircularBufferSize"])

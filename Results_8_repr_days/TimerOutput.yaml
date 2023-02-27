@@ -1,18 +1,18 @@
  ────────────────────────────────────────────────────────────────────────────────
                                         Time                    Allocations      
                                ───────────────────────   ────────────────────────
-       Tot / % measured:             132s /  92.4%           5.87GiB /  90.7%    
+       Tot / % measured:             123s /  89.3%           7.32GiB /  91.9%    
 
  Section               ncalls     time    %tot     avg     alloc    %tot      avg
  ────────────────────────────────────────────────────────────────────────────────
- Solve hydrogen sector  2.69k    86.6s   70.9%  32.1ms   1.51GiB   28.4%   587KiB
- Solve power sector     4.49k    30.5s   24.9%  6.78ms   2.79GiB   52.3%   651KiB
- Query results          7.18k    3.32s    2.7%   462μs    628MiB   11.5%  89.5KiB
- Compute dual resid...    898    810ms    0.7%   903μs    296MiB    5.4%   338KiB
- Compute ADMM penal...  7.18k    383ms    0.3%  53.3μs   58.5MiB    1.1%  8.34KiB
- Compute imbalances       898    218ms    0.2%   243μs   34.2MiB    0.6%  39.0KiB
- Compute primal res...    898    141ms    0.1%   157μs   18.6MiB    0.3%  21.2KiB
- Progress bar             898   85.0ms    0.1%  94.7μs   6.94MiB    0.1%  7.92KiB
- Update ρ                 898   84.9ms    0.1%  94.5μs   5.01MiB    0.1%  5.71KiB
- Update prices            898   7.12ms    0.0%  7.92μs   5.62MiB    0.1%  6.41KiB
+ Solve hydrogen sector  2.62k    70.6s   64.1%  26.9ms   2.14GiB   31.7%   854KiB
+ Solve power sector     4.37k    32.9s   29.9%  7.53ms   3.38GiB   50.3%   812KiB
+ Query results          6.99k    4.64s    4.2%   664μs    821MiB   11.9%   120KiB
+ Compute dual resid...    874    798ms    0.7%   913μs    290MiB    4.2%   340KiB
+ Compute ADMM penal...  6.99k    458ms    0.4%  65.5μs   57.7MiB    0.8%  8.45KiB
+ Compute imbalances       874    227ms    0.2%   260μs   33.9MiB    0.5%  39.7KiB
+ Compute primal res...    874    177ms    0.2%   203μs   18.5MiB    0.3%  21.7KiB
+ Progress bar             874    158ms    0.1%   181μs   6.92MiB    0.1%  8.11KiB
+ Update ρ                 874    107ms    0.1%   122μs   5.01MiB    0.1%  5.86KiB
+ Update prices            874   5.46ms    0.0%  6.25μs   5.47MiB    0.1%  6.41KiB
  ────────────────────────────────────────────────────────────────────────────────

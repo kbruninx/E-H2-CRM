@@ -53,7 +53,8 @@ include(joinpath(home_dir,"Source","save_results.jl"))
 
 # Data 
 data = YAML.load_file(joinpath(home_dir,"Input","overview_data.yaml"))
-ts = CSV.read(joinpath(home_dir,"Input","timeseries.csv"),delim=";",DataFrame)
+ts = CSV.read(joinpath(home_dir,"Input","timeseries.csv"),delim=",",DataFrame)
+order_matrix = CSV.read(joinpath(home_dir,"Input","ordering_variable.csv"),delim=",",DataFrame)
 repr_days = rightjoin(CSV.read(joinpath(home_dir,"Input",string("output_",data["General"]["nReprDays"],"_repr_days"),"decision_variables_short.csv"),delim=",",DataFrame), CSV.read(joinpath(home_dir,"Input",string("output_",data["General"]["nReprDays"],"_repr_days"),"weight_day_month.csv"),delim=",",DataFrame),on= :periods)
 
 # Create folder for results
@@ -90,7 +91,7 @@ for m in agents[:ps]
 end
 for m in agents[:h2s]
     define_common_parameters!(m,mdict[m],merge(data["General"],data["ADMM"],data["HydrogenSector"][m]),ts,repr_days,agents)  # Parameters common to all agents
-    define_H2S_parameters!(m,mdict[m],merge(data["General"],data["HydrogenSector"][m]))                                        # Hydrogen sector
+    define_H2S_parameters!(m,mdict[m],merge(data["General"],data["HydrogenSector"][m]),repr_days,order_matrix)                                        # Hydrogen sector
 end
 
 # Calculate number of agents in each market
@@ -105,7 +106,7 @@ for m in agents[:ps]
     build_ps_agent!(m,mdict[m],EOM)
 end
 for m in agents[:h2s]
-    build_h2s_agent!(m,mdict[m])
+    build_h2s_agent!(m,mdict[m],H2)
 end
 
 println("Build model: done")

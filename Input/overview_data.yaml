@@ -1,6 +1,7 @@
 General: 
   nTimesteps: 24 # number of timesteps per representative day
   nReprDays: 8 # days
+  nDays: 365 # days
   inflation: 0.02
   discount_rate: 0.1
 
@@ -17,13 +18,14 @@ EOM:
 H2:
   demand: 50 # baseline demand for hydrogen, mtH2
   conv_factor: 33 # 1 mt H2 = 33 TWh 
+  elasticity_H2: 0.043747 # TWh - 69440 MWh - check elasticity.xlsm to change it
 
 HydrogenSector: 
 
   H2demand:
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the carbon neutral H2 market
-   WTP: 100  # NEED REF
+   WTP: 630  # NEED REF
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
    OC: 650 # M€/GW - could be a little bit higher
@@ -34,13 +36,11 @@ HydrogenSector:
 
   H2storage:
    VC: 5.5 # M€/TWh could account for cost of electrcity, do we need to include it?
-   OC_cap: 130 # M€/GW - 4200000 eur/t/h = 4200000eur / (33 MWh/t * 1t/h) = 127270 EUR/MW = 130 MEUR/GW
-       # costs of compressor 
-   OC_vol: 500 # MEUR/TWh = 0.5 EUR/kWh
-   # OC_vol: 145 # MEUR/TWh
-       # OC_vol_+_gas_treatment: 2524800 MEUR/Mton = 2524800/33 MEUR/TWh = 76510 MEUR/TWh -- costs of salt cavern (4800eur/t)
-       # + costs of gas treatment (2520000 eur/t) pp.150-151 TNO 2020 report
-       # OC_vol = 4800 MEUR/Mton = 4800 / 33 MEUR/TWh = 145 MEUR/TWh
+   OC_cap: 206 # M€/GW 
+      # 4200000 eur/t/h = 4200000eur / (33 MWh/t * 1t/h) = 127270 EUR/MW = 130 MEUR/GW -- cost of compressor 
+      # 2520000 EUR/ton/h = 2520000 EUR / (33 MWh/t *1t/h) = 76360 MEUR/TW = 76 MEUR/GW -- cost of gas treatment
+      # data from TNO 2020 report pag.150-151
+   OC_vol: 500 # MEUR/TWh = 0.5 EUR/kWh -- projected 2030 from EUR_PyPSA
    Lifetime: 40 # Years 
    efficiency_ch: 0.99 # charging efficiency (needed?)
    efficiency_dh: 0.99 # discharging efficiency (needed?)
@@ -54,7 +54,7 @@ PowerSector:
   Edemand:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
-    WTP: 2000 # EUR/MWh = MEUR/TWh
+    WTP: 1000 # EUR/MWh = MEUR/TWh
 
   H2turbine:
     VC: 2 # MEUR/TWh

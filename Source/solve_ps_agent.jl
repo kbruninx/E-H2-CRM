@@ -1,4 +1,4 @@
-function solve_ps_agent!(m::String,mod::Model)
+function solve_ps_agent!(m::String,mod::Model,EOM::Dict)
     # Extract sets
     JH = mod.ext[:sets][:JH]
     JD = mod.ext[:sets][:JD]
@@ -31,13 +31,22 @@ function solve_ps_agent!(m::String,mod::Model)
         + sum(ρ_H2 / 2 * W[jd] * (gH[jh,jd] - gH_bar[jh,jd])^2 for jh in JH, jd in JD) 
     )
     elseif m == "Edemand"
+        # Extract parameters
         WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
+        ela = EOM["elasticity"]
 
-        g = mod.ext[:variables][:g]
+        # Decision variables/expressions - all negative here
+        g_VOLL = mod.ext[:variables][:g_VOLL]
+        g_ela = mod.ext[:variables][:g_ela]
+        g = mod.ext[:expressions][:g]
 
-        mod.ext[:objective] = @objective(mod, Min,
-        sum(W[jd] * (WTP - λ_EOM[jh, jd]) * g[jh,jd] for jh in JH, jd in JD))  
-
+        # Update objective function 
+        mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
+        sum(W[jd] * ((WTP * g[jh,jd] + (g_ela[jh,jd])^2 * WTP / (2*ela[jh,jd])) - λ_EOM[jh, jd] * g[jh,jd]) for jh in JH, jd in JD)
+        + sum(ρ_EOM / 2 * W[jd] * (g[jh, jd] - g_bar[jh, jd])^2 for jh in JH, jd in JD)
+        )
+        # g_ela is defined negative, therefore the function here must be adapted since there is g_ela^2 : put + instead of - in front of g_ela^2
+    
     else
         VC = mod.ext[:parameters][:VC]
         IC = mod.ext[:parameters][:IC] # overnight investment costs

@@ -1,4 +1,4 @@
-function solve_h2s_agent!(m::String,mod::Model)
+function solve_h2s_agent!(m::String,mod::Model,H2::Dict)
    # Extract sets
    JH = mod.ext[:sets][:JH]
    JD = mod.ext[:sets][:JD]
@@ -17,13 +17,19 @@ function solve_h2s_agent!(m::String,mod::Model)
    if m == "H2demand"
       # Extract parameters
       WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
+      ela_H2 = H2["elasticity"] # section of price-elasticity [MWh]
 
-      # Decision variables
-      gH = mod.ext[:variables][:gH] # negative
+      # Decision variables/expressions - all negative here
+      gH_VOLL = mod.ext[:variables][:gH_VOLL]
+      gH_ela = mod.ext[:variables][:gH_ela]
+      gH = mod.ext[:expressions][:gH]
 
       # Update objective function 
       mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
-      sum(W[jd] * (WTP - λ_H2[jh, jd]) * gH[jh,jd] for jh in JH, jd in JD))  # N.B. g is negative here
+      sum(W[jd] * ((WTP * gH[jh,jd] + (gH_ela[jh,jd])^2 * WTP / (2*ela_H2)) - λ_H2[jh, jd] * gH[jh,jd]) for jh in JH, jd in JD)
+      + sum(ρ_H2 / 2 * W[jd] * (gH[jh, jd] - gH_bar[jh, jd])^2 for jh in JH, jd in JD)
+      )
+      # gH_ela is defined negative, therefore the function here must be adapted since there is gH_ela^2 : put + instead of - in front of gH_ela^2
 
    elseif m == "electrolysis"  # NOT SURE IT WORKS
 

@@ -28,6 +28,7 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         cap = mod.ext[:variables][:cap] = @variable(mod, lower_bound = 0, base_name = "capacity")
         g = mod.ext[:variables][:g] = @variable(mod, [jh = JH, jd = JD], lower_bound = 0, base_name = "generation")
 
+        # Create expressions
         gH = mod.ext[:expressions][:gH] = @expression(mod,
         - g / η_H2_E )
         tot_cost = mod.ext[:expressions][:tot_cost] = @expression(mod,
@@ -48,18 +49,30 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
     elseif m == "Edemand"
         # Define parameters and expressions
         WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
+        ela = EOM["elasticity"] # section of price-elasticity [MWh]
 
         # Create variables
-        g = mod.ext[:variables][:g] = @variable(mod, [jh = JH, jd = JD], upper_bound = 0, base_name = "generation")
+        g_VOLL = mod.ext[:variables][:g_VOLL] = @variable(mod, [jh = JH, jd = JD], upper_bound = 0, base_name = "generation")
+        g_ela = mod.ext[:variables][:g_ela] = @variable(mod, [jh = JH, jd = JD], upper_bound = 0, base_name = "generation")
         # g for demand agent is defined as negative
+
+        # Create expressions
+        g =  mod.ext[:expressions][:g] = @expression(mod, g_VOLL + g_ela)
 
         # Objective 
         mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
-        sum(W[jd] * (WTP - λ_EOM[jh, jd]) * g[jh,jd] for jh in JH, jd in JD))  # N.B. g is negative here
+        sum(W[jd] * ((WTP * g[jh,jd] + (g_ela[jh,jd])^2 * WTP / (2*ela[jh,jd])) - λ_EOM[jh, jd] * g[jh,jd]) for jh in JH, jd in JD)
+        + sum(ρ_EOM / 2 * W[jd] * (g[jh, jd] - g_bar[jh, jd])^2 for jh in JH, jd in JD)
+        ) 
+        # g_ela is defined negative, therefore the function here must be adapted since there is g_ela^2 : put + instead of - in front of g_ela^2
+        # this definition allows to firstly maximize g_voll and than g_ela, because g_voll gives more 
 
-        # Maximux demand constraint
-        mod.ext[:constraints][:demand_limit] = @constraint(mod, [jh = JH, jd = JD],
-        g[jh, jd] >= - EOM["D"][jh, jd])   # again, g is negative
+        # Constraints
+        mod.ext[:constraints][:elastic_demand_limit] = @constraint(mod, [jh = JH, jd = JD],
+        0.2 * EOM["D"][jh, jd] + g_ela[jh,jd] >= 0)   # again, g is negative
+        
+        mod.ext[:constraints][:demand_limit] = @constraint(mod, [jh = JH, jd = JD], 
+        0.8 * EOM["D"][jh, jd] + g_VOLL[jh, jd] >= 0)
 
     else
         # Extract parameters
