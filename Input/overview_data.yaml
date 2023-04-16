@@ -1,31 +1,37 @@
 General: 
-  nTimesteps: 24 # number of timesteps per representative day
+  nTimesteps: 24 #24 # number of timesteps per representative day
   nReprDays: 8 # days
   nDays: 365 # days
+  nYears: 3 # years
   inflation: 0.02
   discount_rate: 0.1
+  gamma: 0.5 # weight of risk measure
+  beta: 0.4 # risk aversion parametrization
 
 ADMM:
- rho_EOM: 0.5 # rho ADMM penalty term, EOM 
- rho_H2: 1  # rho ADMM penalty term, H2
+ rho_EOM: 800 # rho ADMM penalty term, EOM  - initially 0.5
+ rho_H2: 800  # rho ADMM penalty term, H2 - initially 1
+ rho_CM : 1000 #????
  max_iter: 10000 # maximum number of iterations
  epsilon: 1 # stopping criterion - tolerance on "accuracy" with which the coupling constraints are satisfied, expressed as percentage of initial imbalance (e.g., demand). Applied to dual and primal residuals.
  CircularBufferSize: 2 # number of iterations for which data will be retained, should be at least 2 and less than max_iter
 
 EOM: 
   SF: 1 # scale factor for sensitivity analysis
+  elastic_sec_EOM: 0.177067 #TWh - check elasticity.xlsm to change it --- OLD
 
 H2:
   demand: 50 # baseline demand for hydrogen, mtH2
   conv_factor: 33 # 1 mt H2 = 33 TWh 
-  elasticity_H2: 0.043747 # TWh - 69440 MWh - check elasticity.xlsm to change it
+  elastic_sec_H2: 0.002634 # TWh - check elasticity.xlsm to change it
 
 HydrogenSector: 
 
   H2demand:
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the carbon neutral H2 market
-   WTP: 630  # NEED REF
+   CM: "NO"  # participate in the CM
+   WTP: 1000  # # 630 for some curtailment NEED REF
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
    OC: 650 # M€/GW - could be a little bit higher
@@ -33,6 +39,7 @@ HydrogenSector:
    efficiency_E_H2: 0.66 # efficiency conversion electricity to hydrogen 
    EOM: "YES" # participates in EOM
    H2: "YES" # participate in the H2 market
+   CM: "NO"  # participate in the CM
 
   H2storage:
    VC: 5.5 # M€/TWh could account for cost of electrcity, do we need to include it?
@@ -46,6 +53,7 @@ HydrogenSector:
    efficiency_dh: 0.99 # discharging efficiency (needed?)
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the H2 market
+   CM: "NO"  # participate in the CM
 
 # Unless stated otherwise, cost/tech data from EUR-PyPSA https://technology-data.readthedocs.io/en/latest/# 
 # Note all capacity values (power) are expressed in GW, whereas energy related values (energy) are expressed in TWh. All monetary values in M€.
@@ -54,16 +62,18 @@ PowerSector:
   Edemand:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
+    CM: "NO"  # participate in the CM
     WTP: 1000 # EUR/MWh = MEUR/TWh
 
   H2turbine:
     VC: 2 # MEUR/TWh
-    OC: 1200 # MEUR/GW
-    Lifetime: 25 # years
+    OC: 1200 # MEUR/GW   # 700 in Michalski
+    Lifetime: 20 # years
     efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
-    AF_ts: "NA" # depend on hydrogen storage and electrolysis
+    AF_ts: "NA"
     EOM: "YES" # participates in EOM
     H2: "YES" # participate in the carbon neutral H2 market
+    CM: "YES"  # participate in the CM
 
   Biomass: 
     VC: 50 # MEUR/TWh 
@@ -72,14 +82,16 @@ PowerSector:
     AF_ts: "NA" # key to find time series with historical output
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
+    CM: "YES"  # participate in the CM
 
   Solar:
     VC: 2 # MEUR/TWh
     OC: 529 # MEUR/GW
-    Lifetime: 30 # years - assumed 35 in EUR-PyPSA, seems too high
+    Lifetime: 35 # years
     AF_ts: "SOLAR" # key to find time series with historical output
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
+    CM: "NO"  # participate in the CM
 
   WindOnshore:
     VC: 5 # MEUR/TWh
@@ -88,3 +100,13 @@ PowerSector:
     AF_ts: "WIND_ONSHORE" # key to find time series with historical output
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
+    CM: "NO"  # participate in the CM
+
+  #WindOffshore:
+  #  VC: 10 # MEUR/TWh
+  #  OC: 1804 # MEUR/GW
+  #  Lifetime: 25 # years
+  #  AF_ts: "WIND_OFFSHORE" # key to find time series with historical output
+  #  EOM: "YES" # participates in EOM
+  #  H2: "NO" # participate in the carbon neutral H2 market
+  #  CM: "NO"  # participate in the CM

@@ -20,12 +20,14 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
             @timeit TO "Compute imbalances" begin
                 push!(ADMM["Imbalances"]["EOM"], sum(results["g"][m][end] for m in agents[:eom]))
                 push!(ADMM["Imbalances"]["H2"], sum(results["h2"][m][end] for m in agents[:h2]))
+                push!(ADMM["Imbalances"]["CM"], sum(results["cap_cm"][m][end] for m in agents[:cm]) - CM["D"])
             end
 
             # Primal residuals 
             @timeit TO "Compute primal residuals" begin
                 push!(ADMM["Residuals"]["Primal"]["EOM"], sqrt(sum(ADMM["Imbalances"]["EOM"][end].^2)))
                 push!(ADMM["Residuals"]["Primal"]["H2"], sqrt(sum(ADMM["Imbalances"]["H2"][end].^2)))
+                push!(ADMM["Residuals"]["Primal"]["CM"], sqrt(sum(ADMM["Imbalances"]["CM"][end].^2)))
             end
 
             # Dual residuals
@@ -33,6 +35,7 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
             if iter > 1
                 push!(ADMM["Residuals"]["Dual"]["EOM"], sqrt(sum(sum((ADMM["ρ"]["EOM"][end]*((results["g"][m][end]-sum(results["g"][mstar][end] for mstar in agents[:eom])./(EOM["nAgents"]+1)) - (results["g"][m][end-1]-sum(results["g"][mstar][end-1] for mstar in agents[:eom])./(EOM["nAgents"]+1)))).^2 for m in agents[:eom]))))               
                 push!(ADMM["Residuals"]["Dual"]["H2"], sqrt(sum(sum((ADMM["ρ"]["H2"][end]*((results["h2"][m][end]-sum(results["h2"][mstar][end] for mstar in agents[:h2])./(H2["nAgents"]+1)) - (results["h2"][m][end-1]-sum(results["h2"][mstar][end-1] for mstar in agents[:h2])./(H2["nAgents"]+1)))).^2 for m in agents[:h2]))))
+                push!(ADMM["Residuals"]["Dual"]["CM"], sqrt(sum(sum((ADMM["ρ"]["CM"][end]*((results["cap_cm"][m][end]-sum(results["cap_cm"][mstar][end] for mstar in agents[:cm])./(CM["nAgents"]+1)) - (results["cap_cm"][m][end-1]-sum(results["cap_cm"][mstar][end-1] for mstar in agents[:cm])./(CM["nAgents"]+1)))).^2 for m in agents[:cm]))))
             end
             end
 
@@ -41,6 +44,7 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
             @timeit TO "Update prices" begin
                 push!(results["λ"]["EOM"], results[ "λ"]["EOM"][end] - ADMM["ρ"]["EOM"][end]*ADMM["Imbalances"]["EOM"][end])
                 push!(results["λ"]["H2"], results[ "λ"]["H2"][end] - ADMM["ρ"]["H2"][end]*ADMM["Imbalances"]["H2"][end])
+                push!(results["λ"]["CM"], results[ "λ"]["CM"][end] - ADMM["ρ"]["CM"][end]*ADMM["Imbalances"]["CM"][end])
             end
 
             # Update ρ-values
@@ -50,11 +54,11 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
 
             # Progress bar
             @timeit TO "Progress bar" begin
-                set_description(iterations, string(@sprintf("ΔEOM %.3f -- ΔH2-h %.3f ",  ADMM["Residuals"]["Primal"]["EOM"][end], ADMM["Residuals"]["Primal"]["H2"][end])))
+                set_description(iterations, string(@sprintf("ΔEOM %.3f -- ΔH2-h %.3f -- ΔCM %.3f ",  ADMM["Residuals"]["Primal"]["EOM"][end], ADMM["Residuals"]["Primal"]["H2"][end], ADMM["Residuals"]["Primal"]["CM"][end])))
             end
 
             # Check convergence: primal and dual satisfy tolerance 
-            if ADMM["Residuals"]["Primal"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Dual"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Primal"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Dual"]["H2"][end] <= ADMM["Tolerance"]["H2"] 
+            if ADMM["Residuals"]["Primal"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Dual"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Primal"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Dual"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Primal"]["CM"][end] <= ADMM["Tolerance"]["CM"] && ADMM["Residuals"]["Dual"]["CM"][end] <= ADMM["Tolerance"]["CM"] 
                 convergence = 1
             end
 

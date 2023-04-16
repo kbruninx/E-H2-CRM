@@ -1,10 +1,14 @@
-function solve_h2s_agent!(m::String,mod::Model,H2::Dict)
+function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
    # Extract sets
    JH = mod.ext[:sets][:JH]
    JD = mod.ext[:sets][:JD]
+   JY = mod.ext[:sets][:JY]
 
    # Extract common parameters
    W = mod.ext[:parameters][:W] # weight of the representative days
+   P = mod.ext[:parameters][:P] # probability of each scenario
+   γ = mod.ext[:parameters][:γ] # weight of expected revenues and CVAR
+   β = mod.ext[:parameters][:β] # risk aversion parametrization
 
    # ADMM algorithm parameters
    λ_EOM = mod.ext[:parameters][:λ_EOM] # EOM prices
@@ -23,35 +27,60 @@ function solve_h2s_agent!(m::String,mod::Model,H2::Dict)
       gH_VOLL = mod.ext[:variables][:gH_VOLL]
       gH_ela = mod.ext[:variables][:gH_ela]
       gH = mod.ext[:expressions][:gH]
+      α = mod.ext[:variables][:α]
+      u = mod.ext[:variables][:u]
+
+      profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],      # the welfare is formulated negative to make the problem convex
+      sum(W[jd, jy] * (WTP * gH[jh, jd, jy] + (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
+      - λ_H2[jh, jd, jy] * gH[jh, jd, jy]) for jh in JH, jd in JD) )
+
+      CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
+      α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
 
       # Update objective function 
       mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
-      sum(W[jd] * ((WTP * gH[jh,jd] + (gH_ela[jh,jd])^2 * WTP / (2*ela_H2)) - λ_H2[jh, jd] * gH[jh,jd]) for jh in JH, jd in JD)
-      + sum(ρ_H2 / 2 * W[jd] * (gH[jh, jd] - gH_bar[jh, jd])^2 for jh in JH, jd in JD)
-      )
-      # gH_ela is defined negative, therefore the function here must be adapted since there is gH_ela^2 : put + instead of - in front of gH_ela^2
+      γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR                   # negative welfare is already intended as cost-revenue, so no neede for - in front of it
+      + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
+      )  # N.B. gH is negative here
+         # gH_ela is defined negative, therefore the function here must be adapted since there is gH_ela^2 : put + instead of - in front of gH_ela^2
 
-   elseif m == "electrolysis"  # NOT SURE IT WORKS
+   elseif m == "electrolysis"
 
       # Extract parameters
       IC = mod.ext[:parameters][:IC] # annuity investment costs
       η_E_H2 = mod.ext[:parameters][:η_E_H2] # efficiency electrolysis
 
       # Decision variables
-      capH = mod.ext[:variables][:capH] 
+      capH = mod.ext[:variables][:capH]
       g = mod.ext[:variables][:g]  # note this is defined as a negative number, consumption
+      α = mod.ext[:variables][:α]
+      u = mod.ext[:variables][:u]
 
       # Create affine expressions  
       inv_cost = mod.ext[:expressions][:inv_cost]
       gH = mod.ext[:expressions][:gH] # [TWh]
+      
+      cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
+      IC * capH
+      - sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD))
+      
+      revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
+      sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD))
+
+      profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
+      revenue[jy] - cost[jy] )
+
+      CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
+      α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+
+      tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+      sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
       # Update objective function
       mod.ext[:objective] = @objective(mod, Min,
-         + inv_cost # [MEUR]
-         - sum(W[jd] * (λ_EOM[jh, jd]) * g[jh, jd] for jh in JH, jd in JD) # [MEUR]
-         - sum(W[jd] * λ_H2[jh, jd] * gH[jh, jd] for jh in JH, jd in JD)
-         + sum(ρ_EOM / 2 * W[jd] * (g[jh, jd] - g_bar[jh, jd])^2 for jh in JH, jd in JD)
-         + sum(ρ_H2 / 2 * W[jd] * (gH[jh, jd] - gH_bar[jh, jd])^2 for jh in JH, jd in JD)
+      - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+      + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
+      + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
       )
 
    elseif m == "H2storage"
@@ -64,28 +93,44 @@ function solve_h2s_agent!(m::String,mod::Model,H2::Dict)
       IC_vol = mod.ext[:parameters][:IC_vol] # annuity investment cost for volume
 
       # Decision variables
-      capH = mod.ext[:variables][:capH] 
-      volH = mod.ext[:variables][:volH] 
-      chH = mod.ext[:variables][:chH] 
-      dhH = mod.ext[:variables][:dhH] 
+      capH = mod.ext[:variables][:capH]
+      volH = mod.ext[:variables][:volH]
+      chH = mod.ext[:variables][:chH]
+      dhH = mod.ext[:variables][:dhH]
       SOC = mod.ext[:variables][:SOC]
+      α = mod.ext[:variables][:α]
+      u = mod.ext[:variables][:u]
 
       # Create affine expressions  
       inv_cost = mod.ext[:expressions][:inv_cost]
-      # SOC = mod.ext[:expressions][:SOC] = @expression(mod, SOC + η_ch * chH - dhH / η_dh) # state of charge update
-      gH = mod.ext[:expressions][:gH] 
+      gH = mod.ext[:expressions][:gH]
+      
+      cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
+      IC_cap * capH + IC_vol * volH
+      + sum(W[jd, jy] * λ_H2[jh, jd, jy] * chH[jh, jd, jy] for jh in JH, jd in JD))
+      
+      revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
+      sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD))
+
+      profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
+      revenue[jy] - cost[jy] )
+
+      CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
+      α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+
+      tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+      sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+
 
       # Update objective function
       mod.ext[:objective] = @objective(mod, Min,
-         + inv_cost # [MEUR]
-         - sum(W[jd] * (λ_H2[jh, jd]) * dhH[jh, jd] for jh in JH, jd in JD) # [MEUR]
-         + sum(W[jd] * λ_H2[jh, jd] * chH[jh, jd] for jh in JH, jd in JD)
-         + sum(ρ_H2 / 2 * W[jd] * (gH[jh, jd] - gH_bar[jh, jd])^2 for jh in JH, jd in JD)
+      - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+      + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
       )
    end
-    
+
    # solve problem
-   optimize!(mod);
+   optimize!(mod)
 
    return mod
 

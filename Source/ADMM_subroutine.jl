@@ -12,6 +12,11 @@ TO_local = TimerOutput()
         mod.ext[:parameters][:λ_H2] = results["λ"]["H2"][end] 
         mod.ext[:parameters][:ρ_H2] = ADMM["ρ"]["H2"][end]
     end
+    if mod.ext[:parameters][:CM] == 1
+        mod.ext[:parameters][:cap_bar] = results["cap_cm"][m][end] - 1/(CM["nAgents"]+1)*ADMM["Imbalances"]["CM"][end]
+        mod.ext[:parameters][:λ_CM] = results["λ"]["CM"][end] 
+        mod.ext[:parameters][:ρ_CM] = ADMM["ρ"]["CM"][end]
+    end
 end
 
 # Solve agents decision problems:
@@ -30,6 +35,7 @@ end
     if mod.ext[:parameters][:EOM] == 1
         if m == "Edemand"
             push!(results["g"][m], collect(value.(mod.ext[:expressions][:g])))
+            push!(results["g_ela"], collect(value.(mod.ext[:variables][:g_ela])))
         else
             push!(results["g"][m], collect(value.(mod.ext[:variables][:g])))
         end
@@ -41,8 +47,13 @@ end
             push!(results["SOC_AD_0"], collect(value.(mod.ext[:variables][:SOC_AD_0])))
             push!(results["dhH"], collect(value.(mod.ext[:variables][:dhH])))
             push!(results["chH"], collect(value.(mod.ext[:variables][:chH])))
+        elseif m == "H2demand"
+            push!(results["gH2_ela"], collect(value.(mod.ext[:variables][:gH_ela])))
         end
-    end                     
+    end     
+    if mod.ext[:parameters][:CM] == 1
+        push!(results["cap_cm"][m], first(collect(value.(mod.ext[:variables][:cap_cm]))))
+    end               
 end
 
 # Merge local TO with TO:
