@@ -1,0 +1,51 @@
+method:
+  options:
+    mandatory_periods:
+      - 2
+      - 26
+      - 122
+      - 202
+      - 245
+      - 278
+      - 302
+      - 305
+    total_periods: 365
+    sampling_time: "Hour(1)"
+    representative_periods: 8
+    time_steps_per_period: 24
+  optimization:
+    binary_ordering: false
+    time_series_error:
+      weight: 1
+      type: "absolute"
+    integral_weights: false
+    equal_weights: false
+results:
+  save_results: true
+  result_dir: "output_2017"
+  create_plots: true
+base_dir: "c:\\Users\\kbruninx\\Code\\FindRepresentativeDays\\Input"
+time_series:
+  WindOffshore:
+    value_column: "WIND_OFFSHORE"
+  default:
+    weight: 1
+    source: "timeseries_2017.csv"
+    start: 1
+    interpolation_type: "linear"
+    sampling_time: "Hour(1)"
+    csv_options:
+      delim: ","
+    timestamp: "Datetime"
+  Load:
+    value_column: "LOAD"
+  WindOnshore:
+    value_column: "WIND_ONSHORE"
+  Solar:
+    value_column: "SOLAR"
+  Price:
+    value_column: "DA_PRICES"
+  LOAD_H2:
+    value_column: "LOAD_H2"
+  ELASTICITY_EL:
+    value_column: "ELASTICITY_EL"

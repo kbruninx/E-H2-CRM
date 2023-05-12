@@ -1,6 +1,7 @@
 # ADMM 
 function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::Dict,data::Dict,TO::TimerOutput)
     convergence = 0
+    σ = mdict["WindOnshore"].ext[:parameters][:σ] # switch capacity market 
     iterations = ProgressBar(1:data["ADMM"]["max_iter"])
     for iter in iterations
         if convergence == 0
@@ -54,11 +55,11 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
 
             # Progress bar
             @timeit TO "Progress bar" begin
-                set_description(iterations, string(@sprintf("ΔEOM %.3f -- ΔH2-h %.3f -- ΔCM %.3f ",  ADMM["Residuals"]["Primal"]["EOM"][end], ADMM["Residuals"]["Primal"]["H2"][end], ADMM["Residuals"]["Primal"]["CM"][end])))
+                set_description(iterations, string(@sprintf("ΔEOM %.3f -- ΔH2-h %.3f -- ΔCM %.3f ",  ADMM["Residuals"]["Primal"]["EOM"][end], ADMM["Residuals"]["Primal"]["H2"][end], σ * ADMM["Residuals"]["Primal"]["CM"][end])))
             end
 
             # Check convergence: primal and dual satisfy tolerance 
-            if ADMM["Residuals"]["Primal"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Dual"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Primal"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Dual"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Primal"]["CM"][end] <= ADMM["Tolerance"]["CM"] && ADMM["Residuals"]["Dual"]["CM"][end] <= ADMM["Tolerance"]["CM"] 
+            if ADMM["Residuals"]["Primal"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Dual"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Primal"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Dual"]["H2"][end] <= ADMM["Tolerance"]["H2"] && (σ * ADMM["Residuals"]["Primal"]["CM"][end]) <= ADMM["Tolerance"]["CM"] && (σ * ADMM["Residuals"]["Dual"]["CM"][end]) <= ADMM["Tolerance"]["CM"] 
                 convergence = 1
             end
 

@@ -25,39 +25,40 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         ela_H2 = H2["elasticity"] # section of price-elasticity [MWh]
 
         # Create variables
-        gH_VOLL = mod.ext[:variables][:gH_VOLL] = @variable(mod, [jh = JH, jd = JD, jy = JY], upper_bound = 0, base_name = "H2_inelastic_demand")
-        gH_ela = mod.ext[:variables][:gH_ela] = @variable(mod, [jh = JH, jd = JD, jy = JY], upper_bound = 0, base_name = "H2_elastic_demand")
+        gH_VOLL = mod.ext[:variables][:gH_VOLL] = @variable(mod, [jh = JH, jd = JD, jy = JY], lower_bound = 0, base_name = "H2_inelastic_demand")
+        gH_ela = mod.ext[:variables][:gH_ela] = @variable(mod, [jh = JH, jd = JD, jy = JY], lower_bound = 0, base_name = "H2_elastic_demand")
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
         # Create expressions
-        gH = mod.ext[:expressions][:gH] = @expression(mod, gH_VOLL + gH_ela)
+
+        gH_positive = mod.ext[:expressions][:gH_positive] = @expression(mod, gH_VOLL + gH_ela)
+        gH = mod.ext[:expressions][:gH] = @expression(mod, - gH_positive)
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],      # the welfare is formulated negative to make the problem convex
-        sum(W[jd, jy] * (WTP * gH[jh, jd, jy] + (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
-        - λ_H2[jh, jd, jy] * gH[jh, jd, jy]) for jh in JH, jd in JD))
+        sum(W[jd, jy] * (WTP * gH_positive[jh, jd, jy] - (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
+        - λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy]) for jh in JH, jd in JD))
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1 / β) * sum(P[jy] * u[jy] for jy in JY))
+        α - ((1 / β) * sum(P[jy] * u[jy] for jy in JY)))
 
         # Objective 
-        mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
-        γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR                   # profit is here intended as cost-revenue, so no neede for - in front of it
+        mod.ext[:objective] = @objective(mod, Min,
+        - γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
-        )  # N.B. gH is negative here
-        # gH_ela is defined negative, therefore the function here must be adapted since there is gH_ela^2 : put + instead of - in front of gH_ela^2
+        ) 
 
         # Constraints
         mod.ext[:constraints][:elastic_demand_limit] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
-        -gH_ela[jh, jd, jy] <= ela_H2[jy])
+        gH_ela[jh, jd, jy] <= ela_H2[jy])
 
         mod.ext[:constraints][:demand_limit] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
-        -gH_VOLL[jh, jd, jy] <= 0.8 * H2["D"][jh, jd, jy])
+        gH_VOLL[jh, jd, jy] <= 0.8 * H2["D"][jh, jd, jy])
 
-        # CVAR constraint
         if γ < 1
-        mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
-        α + profit[jy] <= u[jy])         # constraint adapted to deal with the signs change in profit
+            # CVAR constraint
+            mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+            α - profit[jy] <= u[jy])        
         end
 
     elseif m == "electrolysis"
@@ -73,11 +74,12 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
         # Create affine expressions  
-        inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * capH)
+        #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * capH)
+        
         gH = mod.ext[:expressions][:gH] = @expression(mod, -η_E_H2 * g) # [TWh]
 
-        tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+        #sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * capH
@@ -90,11 +92,11 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         revenue[jy] - cost[jy] )
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1 / β) * sum(P[jy] * u[jy] for jy in JY))
+        α - ((1 / β) * sum(P[jy] * u[jy] for jy in JY)))
 
         # Definition of the objective function
         mod.ext[:objective] = @objective(mod, Min,
-        -γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         )
@@ -106,8 +108,8 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         -g[jh, jd, jy] <= capH / 1000  # [TWh]
         )
 
-        # CVAR constraint
         if γ < 1
+            # CVAR constraint
             mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
             α - (revenue[jy] - cost[jy]) <= u[jy])
         end
@@ -141,10 +143,10 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
         # Create affine expressions  
-        inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC_cap * capH + IC_vol * volH)
+        #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC_cap * capH + IC_vol * volH)
         gH = mod.ext[:expressions][:gH] = @expression(mod, dhH - chH)
-        tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+        #sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC_cap * capH + IC_vol * volH
@@ -157,7 +159,7 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         revenue[jy] - cost[jy] )
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1 / β) * sum(P[jy] * u[jy] for jy in JY))
+        α - ((1 / β) * sum(P[jy] * u[jy] for jy in JY)))
 
         # Definition of the objective function
         mod.ext[:objective] = @objective(mod, Min,
@@ -238,10 +240,6 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
             SOC[jh, jd, jy] == SOC[jh-1, jd, jy] + (η_ch * chH[jh, jd, jy] - dhH[jh, jd, jy] / η_dh))         # *1h is implied
 
 
-        # Initializing SOC_AD_0 (obtained with optimization)
-        # mod.ext[:constraints][:initial_SOC] = @constraint(mod, [jd_a=first(JD_A)],
-        # SOC_AD_0[jd_a] == 82.44 )
-
         # SOC dynamics interperiod (maybe useful for plots later) - TO BE CHANGED EVENTUALLY
         # mod.ext[:constraints][:SOC_update_inter0] = @constraint(mod, [jh=first(JH), jd_a=JD_A],
         # SOC[jh,jd_a] = SOC[last(JH),jd_a-1] + sum(chron[jd,jd_a]* (η_ch*ch[jh,jd] - dhH[jh,jd]/η_dh)
@@ -251,12 +249,11 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         # for jd in JD))
         # the last two can be use with P2AP funtion
 
-        # CVAR constraint
         if γ < 1
+            # CVAR constraint
             mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
             α - (revenue[jy] - cost[jy]) <= u[jy])
         end
-
     end
 
     return mod

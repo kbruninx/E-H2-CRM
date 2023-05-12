@@ -2,16 +2,17 @@ General:
   nTimesteps: 24 #24 # number of timesteps per representative day
   nReprDays: 8 # days
   nDays: 365 # days
-  nYears: 3 # years
+  nYears: 18 # years
   inflation: 0.02
   discount_rate: 0.1
-  gamma: 0.5 # weight of risk measure
+  gamma: 1 # weight of risk measure
   beta: 0.4 # risk aversion parametrization
+  sigmaCM: 0 # switch for CM
 
 ADMM:
- rho_EOM: 800 # rho ADMM penalty term, EOM  - initially 0.5
- rho_H2: 800  # rho ADMM penalty term, H2 - initially 1
- rho_CM : 1000 #????
+ rho_EOM: 600 # rho ADMM penalty term, EOM
+ rho_H2: 600  # rho ADMM penalty term, H2
+ rho_CM : 1000 # rho ADMM penalty term, electricity CM
  max_iter: 10000 # maximum number of iterations
  epsilon: 1 # stopping criterion - tolerance on "accuracy" with which the coupling constraints are satisfied, expressed as percentage of initial imbalance (e.g., demand). Applied to dual and primal residuals.
  CircularBufferSize: 2 # number of iterations for which data will be retained, should be at least 2 and less than max_iter
@@ -22,7 +23,7 @@ EOM:
 
 H2:
   demand: 50 # baseline demand for hydrogen, mtH2
-  conv_factor: 33 # 1 mt H2 = 33 TWh 
+  conv_factor: 33 # 1 Mt H2 = 33 TWh 
   elastic_sec_H2: 0.002634 # TWh - check elasticity.xlsm to change it
 
 HydrogenSector: 
@@ -35,8 +36,8 @@ HydrogenSector:
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
    OC: 650 # M€/GW - could be a little bit higher
-   Lifetime: 15 # Years 
-   efficiency_E_H2: 0.66 # efficiency conversion electricity to hydrogen 
+   Lifetime: 20 # Years 
+   efficiency_E_H2: 0.68 # efficiency conversion electricity to hydrogen 
    EOM: "YES" # participates in EOM
    H2: "YES" # participate in the H2 market
    CM: "NO"  # participate in the CM
@@ -49,8 +50,8 @@ HydrogenSector:
       # data from TNO 2020 report pag.150-151
    OC_vol: 500 # MEUR/TWh = 0.5 EUR/kWh -- projected 2030 from EUR_PyPSA
    Lifetime: 40 # Years 
-   efficiency_ch: 0.99 # charging efficiency (needed?)
-   efficiency_dh: 0.99 # discharging efficiency (needed?)
+   efficiency_ch: 0.99 # charging efficiency - TNO
+   efficiency_dh: 0.99 # discharging efficiency - TNO
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the H2 market
    CM: "NO"  # participate in the CM
@@ -65,9 +66,9 @@ PowerSector:
     CM: "NO"  # participate in the CM
     WTP: 1000 # EUR/MWh = MEUR/TWh
 
-  H2turbine:
+  H2turbine:    # ref. Hernandez (2021)
     VC: 2 # MEUR/TWh
-    OC: 1200 # MEUR/GW   # 700 in Michalski
+    OC: 1200 # MEUR/GW
     Lifetime: 20 # years
     efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
     AF_ts: "NA"
@@ -104,7 +105,7 @@ PowerSector:
 
   #WindOffshore:
   #  VC: 10 # MEUR/TWh
-  #  OC: 1804 # MEUR/GW
+  #  OC: 1748 # MEUR/GW
   #  Lifetime: 25 # years
   #  AF_ts: "WIND_OFFSHORE" # key to find time series with historical output
   #  EOM: "YES" # participates in EOM

@@ -9,6 +9,7 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
     P = mod.ext[:parameters][:P] # probability of each scenario
     γ = mod.ext[:parameters][:γ] # weight of expected revenues and CVAR
     β = mod.ext[:parameters][:β] # risk aversion parametrization
+    σ = mod.ext[:parameters][:σ] # switch capacity market 
 
 
     # ADMM algorithm parameters
@@ -30,39 +31,60 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
         ela = EOM["elasticity"]
 
-        # Decision variables/expressions 
+        # Decision variables
         g_VOLL = mod.ext[:variables][:g_VOLL]
         g_ela = mod.ext[:variables][:g_ela]
-        g = mod.ext[:expressions][:g]
         α = mod.ext[:variables][:α]
         u = mod.ext[:variables][:u]
 
+        # Expressions 
+
+        g_positive = mod.ext[:expressions][:g_positive] = @expression(mod, g_VOLL + g_ela)
+        g =  mod.ext[:expressions][:g] = @expression(mod, - g_positive)
+
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],      # the welfare is formulated negative to make the problem convex
-        sum(W[jd, jy] * (WTP * g[jh, jd, jy] + (g_ela[jh, jd, jy])^2 * WTP / (2*ela[jh, jd, jy]) 
-        - λ_EOM[jh, jd, jy] * g[jh, jd, jy]) for jh in JH, jd in JD)
-        + λ_CM * CM["D"] )
+        sum(W[jd, jy] * (WTP * g_positive[jh, jd, jy] - (g_ela[jh, jd, jy])^2 * WTP / (2*ela[jh, jd, jy]) 
+        - λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy]) for jh in JH, jd in JD)
+        - σ * λ_CM * CM["D"] )
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+        α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
         # Update objective function 
-        mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
-        γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR                   # negative welfare is already intended as cost-revenue, so no neede for - in front of it
+        mod.ext[:objective] = @objective(mod, Min,
+        - γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         )
-        # g_ela is defined negative, therefore the function here must be adapted since there is g_ela^2 : put + instead of - in front of g_ela^2
+
+        # Updating CVAR constraint
+
+        if γ < 1
+            for jy in JY
+                delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+            end
+            
+            # CVAR constraint
+            mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+            α - profit[jy] <= u[jy] )
+        end
 
     elseif m == "H2turbine"
+
         VC = mod.ext[:parameters][:VC]
         IC = mod.ext[:parameters][:IC] # overnight investment costs
+        η_H2_E = mod.ext[:parameters][:η_H2_E]
 
         g = mod.ext[:variables][:g]
         cap = mod.ext[:variables][:cap]
         cap_cm = mod.ext[:variables][:cap_cm]
-        gH = mod.ext[:expressions][:gH]
         α = mod.ext[:variables][:α]
         u = mod.ext[:variables][:u]
-        inv_cost = mod.ext[:expressions][:inv_cost]
+
+        # Expressions
+
+        #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * cap)
+
+        gH = mod.ext[:expressions][:gH] = @expression(mod, - g / η_H2_E )
         
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * cap
@@ -70,24 +92,36 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         - sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) )
         
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
-        λ_CM * cap_cm 
+        σ * λ_CM * cap_cm 
         + sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) )
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         revenue[jy] - cost[jy] )
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+        α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
-        tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        λ_CM * cap_cm + sum(P[jy] * sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+        #σ * λ_CM * cap_cm + sum(P[jy] * sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
         # Update objective function 
         mod.ext[:objective] = @objective(mod, Min,
-        -γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
-        + ρ_CM / 2 * (cap_cm - cap_bar)^2)
+        + σ * ρ_CM / 2 * (cap_cm - cap_bar)^2)
+
+        # Updating CVAR constraint
+
+        if γ < 1
+            for jy in JY
+                delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+            end
+
+            # CVAR constraint
+            mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+            α - (revenue[jy] - cost[jy]) <= u[jy] )
+        end
 
     elseif m == "Biomass"
 
@@ -99,33 +133,47 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         cap_cm = mod.ext[:variables][:cap_cm]
         α = mod.ext[:variables][:α]
         u = mod.ext[:variables][:u]
-        inv_cost = mod.ext[:expressions][:inv_cost]
+        
+        #inv_cost = mod.ext[:expressions][:inv_cost]
         
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * cap
         + sum(W[jd, jy] * VC * g[jh, jd, jy] for jh in JH, jd in JD) )
 
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
-        λ_CM * cap_cm 
+        σ * λ_CM * cap_cm 
         + sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) )
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         revenue[jy] - cost[jy] )
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+        α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
-        tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        λ_CM * cap_cm + sum(P[jy] * sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+        #σ * λ_CM * cap_cm + sum(P[jy] * sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
         # Update objective function 
         mod.ext[:objective] = @objective(mod, Min,
-        -γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
-        + ρ_CM / 2 * (cap_cm - cap_bar)^2)
+        + σ * ρ_CM / 2 * (cap_cm - cap_bar)^2)
+
+        # Updating CVAR constraint
+
+        if γ < 1
+            for jy in JY
+                delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+            end
+
+            # CVAR constraint
+            mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+            α - (revenue[jy] - cost[jy]) <= u[jy] )
+        end
 
 
     else
+        
         VC = mod.ext[:parameters][:VC]
         IC = mod.ext[:parameters][:IC] # overnight investment costs
 
@@ -133,7 +181,8 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         cap = mod.ext[:variables][:cap]
         α = mod.ext[:variables][:α]
         u = mod.ext[:variables][:u]
-        inv_cost = mod.ext[:expressions][:inv_cost]
+        
+        #inv_cost = mod.ext[:expressions][:inv_cost]
         
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * cap
@@ -145,16 +194,29 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         revenue[jy] - cost[jy] )
 
-        tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        sum(P[jy] * revenue[jy] for jy in JY))
+        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+        #sum(P[jy] * revenue[jy] for jy in JY))
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-        α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+        α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
+
 
         # Update objective function 
         mod.ext[:objective] = @objective(mod, Min,
-        -γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY))
+
+        # Updating CVAR constraint
+
+        if γ < 1
+            for jy in JY
+                delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+            end
+
+            # CVAR constraint
+            mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+            α - (revenue[jy] - cost[jy]) <= u[jy] )
+        end
 
     end
 

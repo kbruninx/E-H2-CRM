@@ -57,15 +57,19 @@ data = YAML.load_file(joinpath(home_dir, "Input", "overview_data.yaml"))
 ts = Dict()
 order_matrix = Dict()
 repr_days = Dict()
-#years = Dict(1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020, 5 => 2021, 6 => 2022)
-# years = Dict(1 => 2021, 2 => 20211) check stochastic
-years = Dict(1 => 2021, 2 => 202105, 3 => 202115)
+# years = Dict(1 => 2021) # deterministic
+# years = Dict(1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020, 5 => 2021, 6 => 2022) # stochastic
+# years = Dict(1 => 2021, 2 => 20211) # validation stochastic
+# years = Dict(1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020) # validation CVAR
+years = Dict(1 => "2017", 2 => "2017_Hhigh", 3 => "2017_Hlow", 4 => "2018", 5 => "2018_Hhigh", 6 => "2018_Hlow", 7 => "2019", 8 => "2019_Hhigh", 9 => "2019_Hlow", 
+10 => "2020", 11 => "2020_Hhigh", 12 => "2020_Hlow", 13 => "2021", 14 => "2021_Hhigh", 15 => "2021_Hlow", 16 => "2022", 17 => "2022_Hhigh", 18 => "2022_Hlow" )
+
 for yr in keys(years)
     ts[yr] = CSV.read(joinpath(home_dir, "Input", "timeseries", string("timeseries_", years[yr], ".csv")), delim=",", DataFrame)
-    #order_matrix[yr] = CSV.read(joinpath(home_dir, "Input", string("ordering_variable_", years[yr], ".csv")), delim=",", DataFrame)
-    order_matrix[yr] = CSV.read(joinpath(home_dir, "Input", string("ordering_variable.csv")), delim=",", DataFrame)
-    #repr_days[yr] = rightjoin(CSV.read(joinpath(home_dir, "Input", string("output_", data["General"]["nReprDays"], "_repr_days"), "decision_variables_short", years[yr], ".csv"), delim=",", DataFrame), CSV.read(joinpath(home_dir, "Input", string("output_", data["General"]["nReprDays"], "_repr_days"), "weight_day_month_", years[yr], ".csv"), delim=",", DataFrame), on=:periods)
-    repr_days[yr] = rightjoin(CSV.read(joinpath(home_dir, "Input", string("output_", data["General"]["nReprDays"], "_repr_days"), "decision_variables_short.csv"), delim=",", DataFrame), CSV.read(joinpath(home_dir, "Input", string("output_", data["General"]["nReprDays"], "_repr_days"), "weight_day_month.csv"), delim=",", DataFrame), on=:periods)
+    order_matrix[yr] = CSV.read(joinpath(home_dir, "Input", string("output_",years[yr]), "ordering_variable.csv"), delim=",", DataFrame)
+    #order_matrix[yr] = CSV.read(joinpath(home_dir, "Input", "output_2021", "ordering_variable.csv"), delim=",", DataFrame)
+    repr_days[yr] = CSV.read(joinpath(home_dir, "Input", string("output_",years[yr]), "decision_variables_short.csv"), delim=",", DataFrame)
+    #repr_days[yr] = CSV.read(joinpath(home_dir, "Input", "output_2021", "decision_variables_short.csv"), delim=",", DataFrame)
 end
 
 # Create folder for results
@@ -100,7 +104,7 @@ define_EOM_parameters!(EOM, merge(data["General"], data["EOM"]), ts, repr_days)
 define_H2_parameters!(H2, merge(data["General"], data["H2"]), ts, repr_days)
 
 # Parameters/variables Electrcity Capacity Market
-CM["D"] =  8.742  # GW
+CM["D"] =  12.525  # GW
 
 # Parameters agents
 for m in agents[:ps]

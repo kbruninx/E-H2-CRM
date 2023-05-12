@@ -26,23 +26,36 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       # Decision variables/expressions - all negative here
       gH_VOLL = mod.ext[:variables][:gH_VOLL]
       gH_ela = mod.ext[:variables][:gH_ela]
-      gH = mod.ext[:expressions][:gH]
       α = mod.ext[:variables][:α]
       u = mod.ext[:variables][:u]
 
+      # Expressions
+
+      gH_positive = mod.ext[:expressions][:gH_positive] = @expression(mod, gH_VOLL + gH_ela)
+      gH = mod.ext[:expressions][:gH] = @expression(mod, - gH_positive)
+
       profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],      # the welfare is formulated negative to make the problem convex
-      sum(W[jd, jy] * (WTP * gH[jh, jd, jy] + (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
-      - λ_H2[jh, jd, jy] * gH[jh, jd, jy]) for jh in JH, jd in JD) )
+      sum(W[jd, jy] * (WTP * gH_positive[jh, jd, jy] - (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
+      - λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy]) for jh in JH, jd in JD) )
 
       CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-      α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+      α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
       # Update objective function 
-      mod.ext[:objective] = @objective(mod, Min,   # minimize a negative quantity (maximize its absolute value)
-      γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR                   # negative welfare is already intended as cost-revenue, so no neede for - in front of it
+      mod.ext[:objective] = @objective(mod, Min,  
+      - γ * sum(P[jy] * profit[jy] for jy in JY) - (1 - γ) * CVAR
       + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
-      )  # N.B. gH is negative here
-         # gH_ela is defined negative, therefore the function here must be adapted since there is gH_ela^2 : put + instead of - in front of gH_ela^2
+      ) 
+
+      if γ < 1
+         for jy in JY
+            delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+         end
+         
+         # CVAR constraint
+         mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+         α - profit[jy] <= u[jy] )
+      end
 
    elseif m == "electrolysis"
 
@@ -57,8 +70,9 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       u = mod.ext[:variables][:u]
 
       # Create affine expressions  
-      inv_cost = mod.ext[:expressions][:inv_cost]
-      gH = mod.ext[:expressions][:gH] # [TWh]
+      #inv_cost = mod.ext[:expressions][:inv_cost]
+      
+      gH = mod.ext[:expressions][:gH] = @expression(mod, -η_E_H2 * g) # [TWh]
       
       cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
       IC * capH
@@ -71,10 +85,10 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       revenue[jy] - cost[jy] )
 
       CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-      α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+      α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
-      tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-      sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+      #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+      #sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
       # Update objective function
       mod.ext[:objective] = @objective(mod, Min,
@@ -82,6 +96,16 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
       + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
       )
+
+      if γ < 1
+         for jy in JY
+            delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+         end
+
+         # CVAR constraint
+         mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+         α - (revenue[jy] - cost[jy]) <= u[jy] )
+      end      
 
    elseif m == "H2storage"
 
@@ -102,8 +126,9 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       u = mod.ext[:variables][:u]
 
       # Create affine expressions  
-      inv_cost = mod.ext[:expressions][:inv_cost]
-      gH = mod.ext[:expressions][:gH]
+      #inv_cost = mod.ext[:expressions][:inv_cost]
+      
+      gH = mod.ext[:expressions][:gH] = @expression(mod, dhH - chH)
       
       cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
       IC_cap * capH + IC_vol * volH
@@ -116,10 +141,10 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       revenue[jy] - cost[jy] )
 
       CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
-      α - (1/β) * sum(P[jy] * u[jy] for jy in JY) )
+      α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
-      tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-      sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
+      #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
+      #sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
 
       # Update objective function
@@ -127,6 +152,16 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
       + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
       )
+
+      if γ < 1
+         for jy in JY
+            delete(mod, mod.ext[:constraints][:VAR_threshold][jy])
+         end
+
+         # CVAR constraint
+         mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
+         α - (revenue[jy] - cost[jy]) <= u[jy] )
+      end
    end
 
    # solve problem
