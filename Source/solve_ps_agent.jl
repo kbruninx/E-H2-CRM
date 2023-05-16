@@ -47,6 +47,9 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         - λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy]) for jh in JH, jd in JD)
         - σ * λ_CM * CM["D"] )
 
+        cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
+        sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy] for jh in JH, jd in JD))
+
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
         α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 

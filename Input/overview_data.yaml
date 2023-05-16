@@ -5,8 +5,8 @@ General:
   nYears: 18 # years
   inflation: 0.02
   discount_rate: 0.1
-  gamma: 1 # weight of risk measure
-  beta: 0.4 # risk aversion parametrization
+  gamma: 0.5 # weight of risk measure
+  beta: 0.7 # risk aversion parametrization
   sigmaCM: 0 # switch for CM
 
 ADMM:

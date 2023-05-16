@@ -43,15 +43,13 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         sum(W[jd, jy] * (WTP * g_positive[jh, jd, jy] - (g_ela[jh, jd, jy])^2 * WTP / (2*ela[jh, jd, jy]) 
         - λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy]) for jh in JH, jd in JD)
         - σ * λ_CM * CM["D"] )
-        # if g_ela is defined negative, the function must be adapted since there is g_ela^2 : put + instead of - in front of g_ela^2
-        # this definition allows to firstly maximize g_voll and than g_ela, because g_voll gives more marginal SW
 
         #revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
         #sum(W[jd, jy] * (WTP * g_positive[jh, jd, jy] - (g_ela[jh, jd, jy])^2 * WTP / (2*ela[jh, jd, jy])) for jh in JH, jd in JD) )
 
-        #cost = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
-        #sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy] for jh in JH, jd in JD)      # negative
-        #+ σ * λ_CM * CM["D"] )
+        cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
+        sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy] for jh in JH, jd in JD)
+        + σ * λ_CM * CM["D"] )
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
         α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )

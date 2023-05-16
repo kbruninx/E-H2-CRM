@@ -35,9 +35,12 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         gH_positive = mod.ext[:expressions][:gH_positive] = @expression(mod, gH_VOLL + gH_ela)
         gH = mod.ext[:expressions][:gH] = @expression(mod, - gH_positive)
 
-        profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],      # the welfare is formulated negative to make the problem convex
+        profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         sum(W[jd, jy] * (WTP * gH_positive[jh, jd, jy] - (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
         - λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy]) for jh in JH, jd in JD))
+
+        cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
+        sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy] for jh in JH, jd in JD))
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
         α - ((1 / β) * sum(P[jy] * u[jy] for jy in JY)))
@@ -77,9 +80,6 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * capH)
         
         gH = mod.ext[:expressions][:gH] = @expression(mod, -η_E_H2 * g) # [TWh]
-
-        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        #sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * capH
@@ -145,8 +145,6 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         # Create affine expressions  
         #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC_cap * capH + IC_vol * volH)
         gH = mod.ext[:expressions][:gH] = @expression(mod, dhH - chH)
-        #tot_revenue = mod.ext[:expressions][:tot_revenue] = @expression(mod,
-        #sum(P[jy] * sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD) for jy in JY))
 
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC_cap * capH + IC_vol * volH

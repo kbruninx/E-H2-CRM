@@ -1,18 +1,18 @@
  ────────────────────────────────────────────────────────────────────────────────
                                         Time                    Allocations      
                                ───────────────────────   ────────────────────────
-       Tot / % measured:            5.00h /  99.8%            762GiB /  99.7%    
+       Tot / % measured:            18.1s /  78.5%           2.38GiB /  30.8%    
 
  Section               ncalls     time    %tot     avg     alloc    %tot      avg
  ────────────────────────────────────────────────────────────────────────────────
- Solve hydrogen sector  14.5k    3.55h   71.3%   884ms    292GiB   38.4%  20.6MiB
- Solve power sector     24.1k    1.20h   24.1%   179ms    374GiB   49.3%  15.9MiB
- Query results          38.6k     813s    4.5%  21.1ms   68.7GiB    9.1%  1.82MiB
- Compute dual resid...  4.82k    11.2s    0.1%  2.32ms   20.3GiB    2.7%  4.31MiB
- Compute ADMM penal...  38.6k    2.55s    0.0%  66.1μs   2.52GiB    0.3%  68.6KiB
- Compute imbalances     4.82k    1.15s    0.0%   239μs   1.03GiB    0.1%   223KiB
- Compute primal res...  4.82k    455ms    0.0%  94.4μs    276MiB    0.0%  58.6KiB
- Update ρ               4.82k    208ms    0.0%  43.1μs   7.14MiB    0.0%  1.51KiB
- Update prices          4.82k    179ms    0.0%  37.1μs    510MiB    0.1%   108KiB
- Progress bar           4.82k    143ms    0.0%  29.7μs   13.9MiB    0.0%  2.95KiB
+ Solve hydrogen sector      6    9.90s   69.8%   1.65s    386MiB   51.4%  64.3MiB
+ Solve power sector        10    3.20s   22.5%   320ms    236MiB   31.4%  23.6MiB
+ Compute dual resid...      2    795ms    5.6%   398ms   83.0MiB   11.1%  41.5MiB
+ Query results             16    146ms    1.0%  9.11ms   29.1MiB    3.9%  1.82MiB
+ Compute imbalances         2    145ms    1.0%  72.3ms   15.3MiB    2.0%  7.67MiB
+ Compute ADMM penal...     16   2.07ms    0.0%   130μs   1.06MiB    0.1%  67.7KiB
+ Compute primal res...      2    508μs    0.0%   254μs    109KiB    0.0%  54.5KiB
+ Update ρ                   2    406μs    0.0%   203μs   1.25KiB    0.0%     640B
+ Update prices              2   93.2μs    0.0%  46.6μs    217KiB    0.0%   108KiB
+ Progress bar               2   44.8μs    0.0%  22.4μs   2.38KiB    0.0%  1.19KiB
  ────────────────────────────────────────────────────────────────────────────────

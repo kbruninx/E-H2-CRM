@@ -15,6 +15,7 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
 
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Diff_VAR",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:variables][:u]).data),:auto), delim=";");
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Profit",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:profit]).data),:auto), delim=";");
+        CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Costs",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:cost]).data),:auto), delim=";");
 
         if m == "Edemand"
             cap[mm] = 0
@@ -24,9 +25,7 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
             cap[mm] = value.(mdict[m].ext[:variables][:cap])
             CVAR[mm] = value.(mdict[m].ext[:expressions][:CVAR])
             VAR[mm] = value.(mdict[m].ext[:variables][:α])
-            CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Costs",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:cost]).data),:auto), delim=";");
             CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Revenues",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:revenue]).data),:auto), delim=";");
-            #tot_revenue[mm] = value.(mdict[m].ext[:expressions][:tot_revenue])
         end
         for jy in 1:data["nYears"]
             CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Generation",agents[:ps][mm],"_",jy,".csv")), DataFrame(results["g"][agents[:ps][mm]][end][:,:,jy],:auto), delim=";");
@@ -37,7 +36,6 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("capacity_ps.csv")), DataFrame(transpose(cap),:auto), delim=";",header=string.("CAP_",agents[:ps]));
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("CVAR_ps.csv")), DataFrame(transpose(CVAR),:auto), delim=";",header=string.("CVAR_",agents[:ps]));
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("VAR_ps.csv")), DataFrame(transpose(VAR),:auto), delim=";",header=string.("VAR_",agents[:ps]));
-    #CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("tot_revenue_ps.csv")), DataFrame(transpose(tot_revenue),:auto), delim=";",header=string.("Tot_revenue_",agents[:ps]));
 
     for jy in 1:data["nYears"]
         ENS = EOM["D"] + results["g"]["Edemand"][end]
@@ -64,14 +62,15 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     # Hydrogen sector
     mm = 1
     capH = zeros(length(agents[:h2s]))
-    tot_revenueH = zeros(length(agents[:h2s]))
     CVAR_H = zeros(length(agents[:h2s]))
     VAR_H = zeros(length(agents[:h2s]))
-    volH = zeros(1) # set at one because there is only 1 storage asset, can be incremented
+    volH = zeros(1) # set at one because there is only 1 storage asset, can be increased
+    
     for m in agents[:h2s]
  
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Diff_VAR",agents[:h2s][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:variables][:u]).data),:auto), delim=";");
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Profit",agents[:h2s][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:profit]).data),:auto), delim=";");
+        CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Costs",agents[:h2s][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:cost]).data),:auto), delim=";");
 
         if m == "H2demand"
             capH[mm] = 0
@@ -81,7 +80,7 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
             capH[mm] = value.(mdict[m].ext[:variables][:capH])
             CVAR_H[mm] = value.(mdict[m].ext[:expressions][:CVAR])
             VAR_H[mm] = value.(mdict[m].ext[:variables][:α])
-            #tot_revenueH[mm] = value.(mdict[m].ext[:expressions][:tot_revenue])
+            
             if m == "H2storage"
                 volH[1] = value.(mdict[m].ext[:variables][:volH])
             end
@@ -95,7 +94,6 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("capacity_h2s.csv")), DataFrame(transpose(capH),:auto), delim=";",header=string.("CAP_",agents[:h2s]));
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("CVAR_h2s.csv")), DataFrame(transpose(CVAR_H),:auto), delim=";",header=string.("CVAR_",agents[:h2s]));
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("VAR_h2s.csv")), DataFrame(transpose(VAR_H),:auto), delim=";",header=string.("VAR_",agents[:h2s]));
-    #CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("tot_revenue_h2s.csv")), DataFrame(transpose(tot_revenueH),:auto), delim=";",header=string.("total_revenue_",agents[:h2s]));
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("storage_volume.csv")), DataFrame(transpose(volH),:auto), delim=";");
 
     # Capacity market

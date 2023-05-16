@@ -38,6 +38,9 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       sum(W[jd, jy] * (WTP * gH_positive[jh, jd, jy] - (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
       - λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy]) for jh in JH, jd in JD) )
 
+      cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
+      sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy] for jh in JH, jd in JD))
+
       CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
       α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
 
