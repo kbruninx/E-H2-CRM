@@ -114,6 +114,13 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
         obj[m] = JuMP.value(objective_value(mdict[m]))
     end
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("objective.csv")), DataFrame(agent = collect(keys(obj)), weigthed_obj = collect(values(obj))), delim=";");
-    
+
+    # Chck convergence
+    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("PrimalResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Primal"]["EOM"][:]', :auto), delim=";")
+    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("PrimalResidualH2.csv")), DataFrame(ADMM["Residuals"]["Primal"]["H2"][:]', :auto), delim=";")
+    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Dual"]["EOM"][:]', :auto), delim=";")
+    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualH2.csv")), DataFrame(ADMM["Residuals"]["Dual"]["H2"][:]', :auto), delim=";")
+
+    plot(1:150, [ADMM["Residuals"]["Primal"]["EOM"][:] ADMM["Residuals"]["Primal"]["H2"][:] ADMM["Residuals"]["Dual"]["EOM"][:] ADMM["Residuals"]["Dual"]["H2"][:]])
 
 end

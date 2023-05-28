@@ -6,12 +6,12 @@ General:
   inflation: 0.02
   discount_rate: 0.1
   gamma: 0.5 # weight of risk measure
-  beta: 0.7 # risk aversion parametrization
+  beta: 0.5555555 # risk aversion parametrization
   sigmaCM: 0 # switch for CM
 
 ADMM:
- rho_EOM: 600 # rho ADMM penalty term, EOM
- rho_H2: 600  # rho ADMM penalty term, H2
+ rho_EOM: 700 # rho ADMM penalty term, EOM
+ rho_H2: 700  # rho ADMM penalty term, H2
  rho_CM : 1000 # rho ADMM penalty term, electricity CM
  max_iter: 10000 # maximum number of iterations
  epsilon: 1 # stopping criterion - tolerance on "accuracy" with which the coupling constraints are satisfied, expressed as percentage of initial imbalance (e.g., demand). Applied to dual and primal residuals.
@@ -50,8 +50,8 @@ HydrogenSector:
       # data from TNO 2020 report pag.150-151
    OC_vol: 500 # MEUR/TWh = 0.5 EUR/kWh -- projected 2030 from EUR_PyPSA
    Lifetime: 40 # Years 
-   efficiency_ch: 0.99 # charging efficiency - TNO
-   efficiency_dh: 0.99 # discharging efficiency - TNO
+   efficiency_ch: 0.95 # charging efficiency - TNO & Elberry
+   efficiency_dh: 0.95 # discharging efficiency - TNO & Elberry
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the H2 market
    CM: "NO"  # participate in the CM

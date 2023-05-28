@@ -13,13 +13,27 @@ HPC = "NA" # NA, DelftBlue or ThinKing
 const home_dir = @__DIR__
 
 if HPC == "DelftBlue"  # only for running this on DelftBlue -- not relevant for now
-    ENV["GRB_LICENSE_FILE"] = "./Hpc/gurobi.lic"
-    ENV["GUROBI_HOME"] = "./scratch/kbruninx/gurobi950/linux64"
+    ENV["GRB_LICENSE_FILE"] = "/home/aberdin/gurobi.lic"
+    ENV["GUROBI_HOME"] = "/scratch/aberdin/gurobi952/linux64"
     println(string("Number of threads: ", Threads.nthreads()))
 end
 
+# Install
+#import Pkg
+#Pkg.add("Gurobi")
+#Pkg.status()
+#Pkg.add("DataFrames")
+#Pkg.add("CSV")
+#Pkg.add("YAML")
+#Pkg.add("DataStructures")
+#Pkg.add("ProgressBars")
+#Pkg.add("Printf")
+#Pkg.add("TimerOutputs")
+#Pkg.add("ArgParse")
+
 # Include packages 
-using JuMP, Gurobi # Optimization packages
+using JuMP # Optimization packages
+using Gurobi
 using DataFrames, CSV, YAML, DataStructures # dataprocessing
 using ProgressBars, Printf # progress bar
 using TimerOutputs # profiling 
