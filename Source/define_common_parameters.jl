@@ -19,6 +19,7 @@ function define_common_parameters!(m::String, mod::Model, data::Dict, ts::Dict, 
     mod.ext[:parameters][:γ] = data["gamma"]            # weight of expected revenues and CVAR
     mod.ext[:parameters][:β] = data["beta"]          # risk aversion parameter - represents the cumulative probability of worst-case scenarios
     mod.ext[:parameters][:σ] = data["sigmaCM"] # switch for the capacity market
+    mod.ext[:parameters][:σH] = data["sigmaHCM"] # switch for the capacity market
 
     # Parameters related to the EOM
     mod.ext[:parameters][:λ_EOM] = zeros(data["nTimesteps"], data["nReprDays"], data["nYears"])   # Price structure
@@ -35,6 +36,10 @@ function define_common_parameters!(m::String, mod::Model, data::Dict, ts::Dict, 
     mod.ext[:parameters][:cap_bar] = 0   # ADMM penalty term
     mod.ext[:parameters][:ρ_CM] = data["rho_CM"]           # ADMM rho value 
 
+    # Parameters related to the hydrogen CM
+    mod.ext[:parameters][:λ_HCM] = 0    # Price structure
+    mod.ext[:parameters][:capH_bar] = 0   # ADMM penalty term
+    mod.ext[:parameters][:ρ_HCM] = data["rho_HCM"]           # ADMM rho value 
 
     # Covered by EOM?
     if data["EOM"] == "YES"
@@ -55,9 +60,17 @@ function define_common_parameters!(m::String, mod::Model, data::Dict, ts::Dict, 
     # Covered by Electrcity Capacity Market 
     if data["CM"] == "YES"
         mod.ext[:parameters][:CM] = 1
-            push!(agents[:cm], m)
+        push!(agents[:cm], m)
     else
         mod.ext[:parameters][:CM] = 0
+    end
+
+    # Covered by Hydrogen Capacity Market 
+    if data["HCM"] == "YES"
+        mod.ext[:parameters][:HCM] = 1
+        push!(agents[:hcm], m)
+    else
+        mod.ext[:parameters][:HCM] = 0
     end
 
     return mod, agents

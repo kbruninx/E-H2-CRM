@@ -37,9 +37,11 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("CVAR_ps.csv")), DataFrame(transpose(CVAR),:auto), delim=";",header=string.("CVAR_",agents[:ps]));
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("VAR_ps.csv")), DataFrame(transpose(VAR),:auto), delim=";",header=string.("VAR_",agents[:ps]));
 
+    ENS = EOM["D"] + results["g"]["Edemand"][end]
+    ENS_H2 = H2["D"] + results["gH"]["H2demand"][end]
     for jy in 1:data["nYears"]
-        ENS = EOM["D"] + results["g"]["Edemand"][end]
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("ENS_el_",jy,".csv")), DataFrame(ENS[:,:,jy],:auto), delim=";");
+
 
         # Elastic demand
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Elastic_demand_el_",jy,".csv")), DataFrame(results["g_ela"][end][:,:,jy],:auto), delim=";");
@@ -106,6 +108,14 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
         mm = mm + 1
     end
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("capacity_offered_cm.csv")), DataFrame(transpose(cap_cm),:auto), header=string.("CAP_",agents[:cm]));
+
+    mm = 1
+    capH_cm = zeros(length(agents[:hcm]))
+    for m in agents[:hcm]
+        capH_cm[mm] = value.(mdict[m].ext[:variables][:capH_cm])
+        mm = mm + 1
+    end
+    CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("capacity_offered_H2cm.csv")), DataFrame(transpose(capH_cm), :auto), header=string.("CAP_H_", agents[:hcm]))
 
     # Net profits
 

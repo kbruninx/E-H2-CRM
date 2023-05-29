@@ -103,6 +103,7 @@ agents[:all] = union(agents[:ps], agents[:h2s])
 agents[:eom] = []
 agents[:h2] = []
 agents[:cm] = []
+agents[:hcm] = []
 mdict = Dict(i => Model(optimizer_with_attributes(() -> Gurobi.Optimizer(GUROBI_ENV))) for i in agents[:all])
 
 ## 3. Define parameters for markets and representative agents
@@ -110,6 +111,7 @@ mdict = Dict(i => Model(optimizer_with_attributes(() -> Gurobi.Optimizer(GUROBI_
 EOM = Dict{String,Any}()
 H2 = Dict{String,Any}()
 CM = Dict{String,Any}()
+HCM = Dict{String,Any}()
 
 # Parameters/variables EOM
 define_EOM_parameters!(EOM, merge(data["General"], data["EOM"]), ts, repr_days)
@@ -117,8 +119,9 @@ define_EOM_parameters!(EOM, merge(data["General"], data["EOM"]), ts, repr_days)
 # Parameters/variables Hydrogen Market
 define_H2_parameters!(H2, merge(data["General"], data["H2"]), ts, repr_days)
 
-# Parameters/variables Electrcity Capacity Market
+# Parameters/variables Capacity Market
 CM["D"] =  12.525  # GW
+HCM["D"] = 0 # GW
 
 # Parameters agents
 for m in agents[:ps]
@@ -134,6 +137,7 @@ end
 EOM["nAgents"] = length(agents[:eom])
 H2["nAgents"] = length(agents[:h2])
 CM["nAgents"] = length(agents[:cm])
+HCM["nAgents"] = length(agents[:hcm])
 
 println("Inititate model, sets and parameters: done")
 println("   ")

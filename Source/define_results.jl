@@ -2,6 +2,7 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     results["g"] = Dict()
     results["h2"] = Dict()
     results["cap_cm"] = Dict()
+    results["capH_cm"] = Dict()
     results["SOC"] = Dict() # probably not needed
 
     for m in agents[:eom]
@@ -34,6 +35,11 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
         results["cap_cm"][m] = CircularBuffer{Float64}(data["CircularBufferSize"])
         push!(results["cap_cm"][m], 0.0)
     end
+    for m in agents[:hcm]
+        results["capH_cm"][m] = CircularBuffer{Float64}(data["CircularBufferSize"])
+        push!(results["capH_cm"][m], 0.0)
+    end
+
 
 
     results["λ"] = Dict()
@@ -43,6 +49,8 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(results["λ"]["H2"], zeros(data["nTimesteps"], data["nReprDays"], data["nYears"]))
     results["λ"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(results["λ"]["CM"], 0.0)
+    results["λ"]["HCM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    push!(results["λ"]["HCM"], 0.0)
 
     ADMM["Imbalances"] = Dict()
     ADMM["Imbalances"]["EOM"] = CircularBuffer{Array{Float64,3}}(data["CircularBufferSize"])
@@ -51,6 +59,8 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(ADMM["Imbalances"]["H2"], zeros(data["nTimesteps"], data["nReprDays"], data["nYears"]))
     ADMM["Imbalances"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(ADMM["Imbalances"]["CM"], 0.0)
+    ADMM["Imbalances"]["HCM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    push!(ADMM["Imbalances"]["HCM"], 0.0)
 
     ADMM["Residuals"] = Dict()
     ADMM["Residuals"]["Primal"] = Dict()
@@ -60,6 +70,8 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(ADMM["Residuals"]["Primal"]["H2"], 0)
     ADMM["Residuals"]["Primal"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(ADMM["Residuals"]["Primal"]["CM"], 0)
+    ADMM["Residuals"]["Primal"]["HCM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    push!(ADMM["Residuals"]["Primal"]["HCM"], 0)
 
     ADMM["Residuals"]["Dual"] = Dict()
     ADMM["Residuals"]["Dual"]["EOM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
@@ -68,11 +80,14 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(ADMM["Residuals"]["Dual"]["H2"], 0)
     ADMM["Residuals"]["Dual"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(ADMM["Residuals"]["Dual"]["CM"], 0)
+    ADMM["Residuals"]["Dual"]["HCM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    push!(ADMM["Residuals"]["Dual"]["HCM"], 0)
 
     ADMM["Tolerance"] = Dict()
     ADMM["Tolerance"]["EOM"] = data["epsilon"] / 100 * maximum(EOM["D"]) * sqrt(data["nTimesteps"] * data["nReprDays"] * data["nYears"])
     ADMM["Tolerance"]["H2"] = data["epsilon"] / 100 * maximum(H2["D"]) * sqrt(data["nTimesteps"] * data["nReprDays"] * data["nYears"])
     ADMM["Tolerance"]["CM"] = data["epsilon"] / 1000 * maximum(CM["D"]) * sqrt(1)
+    ADMM["Tolerance"]["HCM"] = data["epsilon"] / 1000 * maximum(HCM["D"]) * sqrt(1)
 
     ADMM["ρ"] = Dict()
     ADMM["ρ"]["EOM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
@@ -81,6 +96,8 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(ADMM["ρ"]["H2"], data["rho_H2"])
     ADMM["ρ"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(ADMM["ρ"]["CM"], data["rho_CM"])
+    ADMM["ρ"]["HCM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    push!(ADMM["ρ"]["HCM"], data["rho_HCM"])
 
 
     ADMM["n_iter"] = 1

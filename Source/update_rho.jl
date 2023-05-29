@@ -18,5 +18,11 @@ function update_rho!(ADMM::Dict, iter::Int64)
         elseif ADMM["Residuals"]["Dual"]["CM"][end] > 2*ADMM["Residuals"]["Primal"]["CM"][end]
             push!(ADMM["ρ"]["CM"], 1/1.1*ADMM["ρ"]["CM"][end])
         end
+
+        if ADMM["Residuals"]["Primal"]["HCM"][end] > 2 * ADMM["Residuals"]["Dual"]["HCM"][end]
+            push!(ADMM["ρ"]["HCM"], minimum([1000, 1.1 * ADMM["ρ"]["HCM"][end]]))
+        elseif ADMM["Residuals"]["Dual"]["HCM"][end] > 2 * ADMM["Residuals"]["Primal"]["HCM"][end]
+            push!(ADMM["ρ"]["HCM"], 1 / 1.1 * ADMM["ρ"]["HCM"][end])
+        end
     end
 end

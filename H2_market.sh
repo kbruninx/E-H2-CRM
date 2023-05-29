@@ -8,7 +8,7 @@
 #SBATCH --time=09:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
-#SBATCH --mem-per-cpu=3GB
+#SBATCH --mem-per-cpu=2GB
 
 module load 2022r2
 srun ~/julia-1.9.0/bin/julia --threads=9 MAIN.jl

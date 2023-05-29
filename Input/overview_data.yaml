@@ -6,13 +6,15 @@ General:
   inflation: 0.02
   discount_rate: 0.1
   gamma: 0.5 # weight of risk measure
-  beta: 0.5555555 # risk aversion parametrization
+  beta: 0.7777777 # risk aversion parametrization
   sigmaCM: 0 # switch for CM
+  sigmaHCM: 0 # switch for hydrogen CM
 
 ADMM:
  rho_EOM: 700 # rho ADMM penalty term, EOM
  rho_H2: 700  # rho ADMM penalty term, H2
  rho_CM : 1000 # rho ADMM penalty term, electricity CM
+ rho_HCM : 1000 # rho ADMM penalty term, hydrogen CM
  max_iter: 10000 # maximum number of iterations
  epsilon: 1 # stopping criterion - tolerance on "accuracy" with which the coupling constraints are satisfied, expressed as percentage of initial imbalance (e.g., demand). Applied to dual and primal residuals.
  CircularBufferSize: 2 # number of iterations for which data will be retained, should be at least 2 and less than max_iter
@@ -32,6 +34,7 @@ HydrogenSector:
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the carbon neutral H2 market
    CM: "NO"  # participate in the CM
+   HCM: "NO" # participate in the hydrogen CM
    WTP: 1000  # # 630 for some curtailment NEED REF
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
@@ -40,7 +43,8 @@ HydrogenSector:
    efficiency_E_H2: 0.68 # efficiency conversion electricity to hydrogen 
    EOM: "YES" # participates in EOM
    H2: "YES" # participate in the H2 market
-   CM: "NO"  # participate in the CM
+   CM: "NO"  # participate in the CM  TO BE CHANGED N YES EVENUALLY, WHEN IT REPRESENTS DEMAND IN CM SIMULATIONS
+   HCM: "YES" # participate in the hydrogen CM
 
   H2storage:
    VC: 5.5 # M€/TWh could account for cost of electrcity, do we need to include it?
@@ -55,6 +59,7 @@ HydrogenSector:
    EOM: "NO" # participates in EOM
    H2: "YES" # participate in the H2 market
    CM: "NO"  # participate in the CM
+   HCM: "YES" # participate in the hydrogen CM
 
 # Unless stated otherwise, cost/tech data from EUR-PyPSA https://technology-data.readthedocs.io/en/latest/# 
 # Note all capacity values (power) are expressed in GW, whereas energy related values (energy) are expressed in TWh. All monetary values in M€.
@@ -64,6 +69,7 @@ PowerSector:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
     CM: "NO"  # participate in the CM
+    HCM: "NO" # participate in the hydrogen CM
     WTP: 1000 # EUR/MWh = MEUR/TWh
 
   H2turbine:    # ref. Hernandez (2021)
@@ -75,6 +81,7 @@ PowerSector:
     EOM: "YES" # participates in EOM
     H2: "YES" # participate in the carbon neutral H2 market
     CM: "YES"  # participate in the CM
+    HCM: "YES" # participate in the hydrogen CM
 
   Biomass: 
     VC: 50 # MEUR/TWh 
@@ -84,6 +91,7 @@ PowerSector:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
     CM: "YES"  # participate in the CM
+    HCM: "NO" # participate in the hydrogen CM
 
   Solar:
     VC: 2 # MEUR/TWh
@@ -93,6 +101,7 @@ PowerSector:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
     CM: "NO"  # participate in the CM
+    HCM: "NO" # participate in the hydrogen CM
 
   WindOnshore:
     VC: 5 # MEUR/TWh
@@ -102,6 +111,7 @@ PowerSector:
     EOM: "YES" # participates in EOM
     H2: "NO" # participate in the carbon neutral H2 market
     CM: "NO"  # participate in the CM
+    HCM: "NO" # participate in the hydrogen CM
 
   #WindOffshore:
   #  VC: 10 # MEUR/TWh
@@ -111,3 +121,4 @@ PowerSector:
   #  EOM: "YES" # participates in EOM
   #  H2: "NO" # participate in the carbon neutral H2 market
   #  CM: "NO"  # participate in the CM
+  #  HCM: "NO" # participate in the hydrogen CM

@@ -9,8 +9,8 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
     P = mod.ext[:parameters][:P] # probability of each scenario
     γ = mod.ext[:parameters][:γ] # weight of expected revenues and CVAR
     β = mod.ext[:parameters][:β] # risk aversion parametrization
-    σ = mod.ext[:parameters][:σ] # switch capacity market 
-
+    σ = mod.ext[:parameters][:σ] # switch capacity market
+    σH = mod.ext[:parameters][:σH] # switch H2 capacity market
 
     # ADMM algorithm parameters
     λ_EOM = mod.ext[:parameters][:λ_EOM] # EOM prices
@@ -22,6 +22,9 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
     λ_CM = mod.ext[:parameters][:λ_CM] # capacity market prices
     cap_bar = mod.ext[:parameters][:cap_bar]  # element in ADMM penalty term related to CM
     ρ_CM = mod.ext[:parameters][:ρ_CM]  # rho-value in ADMM related to CM auctions
+    λ_HCM = mod.ext[:parameters][:λ_HCM] # hydrogen capacity market prices
+    capH_bar = mod.ext[:parameters][:capH_bar]  # element in ADMM penalty term related to hydrogen CM
+    ρ_HCM = mod.ext[:parameters][:ρ_HCM]  # rho-value in ADMM related to hydrogen CM auctions
 
 
     # Extract variables and update objective
@@ -76,10 +79,12 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         VC = mod.ext[:parameters][:VC]
         IC = mod.ext[:parameters][:IC] # overnight investment costs
         η_H2_E = mod.ext[:parameters][:η_H2_E]
+        WTP_HCM = 10000 # random, must be chosen
 
         g = mod.ext[:variables][:g]
         cap = mod.ext[:variables][:cap]
         cap_cm = mod.ext[:variables][:cap_cm]
+        capH_cm = mod.ext[:variables][:capH_cm]
         α = mod.ext[:variables][:α]
         u = mod.ext[:variables][:u]
 
@@ -95,7 +100,8 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         - sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) )
         
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
-        σ * λ_CM * cap_cm 
+        σ * λ_CM * cap_cm
+        - σH * (WTP_HCM - λ_HCM) * capH_cm   # capH_cm is negative (demand) so there is a - in front of it
         + sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) )
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
@@ -112,7 +118,8 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
-        + σ * ρ_CM / 2 * (cap_cm - cap_bar)^2)
+        + σ * ρ_CM / 2 * (cap_cm - cap_bar)^2
+        + σH * ρ_HCM / 2 * (capH_cm - capH_bar)^2)
 
         # Updating CVAR constraint
 

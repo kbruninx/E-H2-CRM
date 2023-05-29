@@ -17,6 +17,11 @@ TO_local = TimerOutput()
         mod.ext[:parameters][:λ_CM] = results["λ"]["CM"][end] 
         mod.ext[:parameters][:ρ_CM] = ADMM["ρ"]["CM"][end]
     end
+    if mod.ext[:parameters][:HCM] == 1
+        mod.ext[:parameters][:capH_bar] = results["capH_cm"][m][end] - 1 / (HCM["nAgents"] + 1) * ADMM["Imbalances"]["HCM"][end]
+        mod.ext[:parameters][:λ_HCM] = results["λ"]["HCM"][end]
+        mod.ext[:parameters][:ρ_HCM] = ADMM["ρ"]["HCM"][end]
+    end
 end
 
 # Solve agents decision problems:
@@ -53,7 +58,10 @@ end
     end     
     if mod.ext[:parameters][:CM] == 1
         push!(results["cap_cm"][m], first(collect(value.(mod.ext[:variables][:cap_cm]))))
-    end               
+    end
+    if mod.ext[:parameters][:HCM] == 1
+        push!(results["capH_cm"][m], first(collect(value.(mod.ext[:variables][:capH_cm]))))
+    end
 end
 
 # Merge local TO with TO:

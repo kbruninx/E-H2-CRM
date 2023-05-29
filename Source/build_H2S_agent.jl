@@ -9,6 +9,8 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
     P = mod.ext[:parameters][:P] # probability of each scenario
     γ = mod.ext[:parameters][:γ] # weight of expected revenues and CVAR
     β = mod.ext[:parameters][:β] # risk aversion parametrization
+    σ = mod.ext[:parameters][:σ] # switch capacity market
+    σH = mod.ext[:parameters][:σH] # switch H2 capacity market
 
     # ADMM algorithm parameters
     λ_EOM = mod.ext[:parameters][:λ_EOM] # EOM prices
@@ -17,6 +19,12 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
     λ_H2 = mod.ext[:parameters][:λ_H2] # H2 prices
     gH_bar = mod.ext[:parameters][:gH_bar] # element in ADMM penalty term related to hydrogen market
     ρ_H2 = mod.ext[:parameters][:ρ_H2] # rho-value in ADMM related to H2 market
+    λ_CM = mod.ext[:parameters][:λ_CM] # capacity market prices
+    cap_bar = mod.ext[:parameters][:cap_bar]  # element in ADMM penalty term related to CM
+    ρ_CM = mod.ext[:parameters][:ρ_CM]  # rho-value in ADMM related to CM auctions
+    λ_HCM = mod.ext[:parameters][:λ_HCM] # hydrogen capacity market prices
+    capH_bar = mod.ext[:parameters][:capH_bar]  # element in ADMM penalty term related to hydrogen CM
+    ρ_HCM = mod.ext[:parameters][:ρ_HCM]  # rho-value in ADMM related to hydrogen CM auctions
 
 
     if m == "H2demand"
@@ -37,10 +45,12 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         sum(W[jd, jy] * (WTP * gH_positive[jh, jd, jy] - (gH_ela[jh, jd, jy])^2 * WTP / (2 * ela_H2[jy])
-        - λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy]) for jh in JH, jd in JD))
+        - λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy]) for jh in JH, jd in JD)
+        - σH * λ_HCM * HCM["D"])
 
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
-        sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy] for jh in JH, jd in JD))
+        sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH_positive[jh, jd, jy] for jh in JH, jd in JD)
+        + σH * λ_HCM * HCM["D"])
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
         α - ((1 / β) * sum(P[jy] * u[jy] for jy in JY)))
@@ -69,9 +79,12 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         # Extract parameters
         η_E_H2 = mod.ext[:parameters][:η_E_H2] # efficiency electrolysis
         IC = mod.ext[:parameters][:IC] # annuity investment costs
+        WTP_CM = 10000 # random, must be chosen
 
         # Decision variables
         capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound = 0, base_name = "capacity")
+        capH_cm = mod.ext[:variables][:capH_cm] = @variable(mod, lower_bound = 0, base_name = "capacity offered HCM")
+        cap_cm = mod.ext[:variables][:cap_cm] = @variable(mod, upper_bound = 0, base_name = "capacity demand CM")
         g = mod.ext[:variables][:g] = @variable(mod, [jh = JH, jd = JD, jy = JY], upper_bound = 0, base_name = "demand_electricity_hydrogen") # note this is defined as a negative number, consumption
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
@@ -86,7 +99,9 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         - sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD))
 
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
-        sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD))
+        sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD)
+        - σ * (WTP_CM - λ_CM) * cap_cm   # cap_cm is negative (demand)
+        + σH * λ_HCM * capH_cm)
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         revenue[jy] - cost[jy] )
@@ -96,9 +111,11 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
 
         # Definition of the objective function
         mod.ext[:objective] = @objective(mod, Min,
-        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
+        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR +
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
+        + σ * ρ_CM / 2 * (cap_cm - cap_bar)^2
+        + σH * ρ_HCM / 2 * (capH_cm - capH_bar)^2
         )
 
         # Constraints
@@ -107,6 +124,18 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         mod.ext[:constraints][:elec_consumption] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
         -g[jh, jd, jy] <= capH / 1000  # [TWh]
         )
+
+        # Capacity demand in electricity CM - they demand for firm capacity up to th installed electrolyzer capacity (epressed in GW_e)
+        if σ == 1
+            mod.ext[:constraints][:cap_demand] = @constraint(mod,
+            - cap_cm <= capH)
+        end
+
+        # Capacity offered in H2 CM - they offer up to their instaled capacity (corrected by thir efficiency o represent true output)
+        if σH == 1
+            mod.ext[:constraints][:cap_offer] = @constraint(mod,
+            capH_cm <= capH * η_E_H2)
+        end
 
         if γ < 1
             # CVAR constraint
@@ -129,6 +158,8 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         # Decision variables
         capH = mod.ext[:variables][:capH] = @variable(mod, lower_bound = 0, base_name = "capacity") # GW
         volH = mod.ext[:variables][:volH] = @variable(mod, lower_bound = 0, base_name = "volume") # TWh
+        capH_cm = mod.ext[:variables][:capH_cm] = @variable(mod, lower_bound = 0, base_name = "capacity offered HCM") # GW
+
         chH = mod.ext[:variables][:chH] = @variable(mod, [jh = JH, jd = JD, jy = JY], lower_bound = 0, base_name = "hydrogen_charging")
         dhH = mod.ext[:variables][:dhH] = @variable(mod, [jh = JH, jd = JD, jy = JY], lower_bound = 0, base_name = "hydrogen_discharging")
         delta_e = mod.ext[:expressions][:delta_e] = @variable(mod, [jd = JD, jy = JY])
@@ -151,7 +182,9 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         + sum(W[jd, jy] * λ_H2[jh, jd, jy] * chH[jh, jd, jy] for jh in JH, jd in JD))
 
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
-        sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD))
+        sum(W[jd, jy] * λ_H2[jh, jd, jy] * dhH[jh, jd, jy] for jh in JH, jd in JD)
+        + σH * λ_HCM * capH_cm
+        )
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
         revenue[jy] - cost[jy] )
@@ -163,6 +196,7 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         mod.ext[:objective] = @objective(mod, Min,
         - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
+        + σH * ρ_HCM / 2 * (capH_cm - capH_bar)^2
         )
 
         # Constraints
@@ -251,6 +285,11 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
             # CVAR constraint
             mod.ext[:constraints][:VAR_threshold] = @constraint(mod, [jy = JY],
             α - (revenue[jy] - cost[jy]) <= u[jy])
+        end
+
+        if σH == 1   # capacity offered in the H2 CM (correctd for the discharge efficiency)
+            mod.ext[:constraints][:cap_offer] = @constraint(mod,
+            capH_cm <= capH * η_dh)
         end
     end
 
