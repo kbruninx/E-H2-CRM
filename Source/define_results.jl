@@ -84,8 +84,8 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(ADMM["Residuals"]["Dual"]["HCM"], 0)
 
     ADMM["Tolerance"] = Dict()
-    ADMM["Tolerance"]["EOM"] = data["epsilon"] / 100 * maximum(EOM["D"]) * sqrt(data["nTimesteps"] * data["nReprDays"] * data["nYears"])
-    ADMM["Tolerance"]["H2"] = data["epsilon"] / 100 * maximum(H2["D"]) * sqrt(data["nTimesteps"] * data["nReprDays"] * data["nYears"])
+    ADMM["Tolerance"]["EOM"] = data["epsilon"] / 1000 * maximum(EOM["D"]) * sqrt(data["nTimesteps"] * data["nReprDays"] * data["nYears"])
+    ADMM["Tolerance"]["H2"] = data["epsilon"] / 1000 * maximum(H2["D"]) * sqrt(data["nTimesteps"] * data["nReprDays"] * data["nYears"])
     ADMM["Tolerance"]["CM"] = data["epsilon"] / 1000 * maximum(CM["D"]) * sqrt(1)
     ADMM["Tolerance"]["HCM"] = data["epsilon"] / 1000 * maximum(HCM["D"]) * sqrt(1)
 

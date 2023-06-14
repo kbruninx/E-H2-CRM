@@ -7,7 +7,7 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     end
 
     cap = zeros(length(agents[:ps]))
-    tot_revenue = zeros(length(agents[:ps]))
+    #cap = Dict()
     CVAR = zeros(length(agents[:ps]))
     VAR = zeros(length(agents[:ps]))
     mm = 1
@@ -18,15 +18,16 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Costs",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:cost]).data),:auto), delim=";");
 
         if m == "Edemand"
-            cap[mm] = 0
-            CVAR[mm] = value.(mdict[m].ext[:expressions][:CVAR])
-            VAR[mm] = value.(mdict[m].ext[:variables][:α])
+            cap[m] = 0
+            CVAR[m] = value.(mdict[m].ext[:expressions][:CVAR])
+            VAR[m] = value.(mdict[m].ext[:variables][:α])
         else
             cap[mm] = value.(mdict[m].ext[:variables][:cap])
             CVAR[mm] = value.(mdict[m].ext[:expressions][:CVAR])
             VAR[mm] = value.(mdict[m].ext[:variables][:α])
             CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Revenues",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:revenue]).data),:auto), delim=";");
         end
+
         for jy in 1:data["nYears"]
             CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Generation",agents[:ps][mm],"_",jy,".csv")), DataFrame(results["g"][agents[:ps][mm]][end][:,:,jy],:auto), delim=";");
         end
@@ -38,10 +39,10 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("VAR_ps.csv")), DataFrame(transpose(VAR),:auto), delim=";",header=string.("VAR_",agents[:ps]));
 
     ENS = EOM["D"] + results["g"]["Edemand"][end]
-    ENS_H2 = H2["D"] + results["gH"]["H2demand"][end]
+    ENS_H2 = H2["D"] + results["h2"]["H2demand"][end]
     for jy in 1:data["nYears"]
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("ENS_el_",jy,".csv")), DataFrame(ENS[:,:,jy],:auto), delim=";");
-
+        CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("ENS_H2_", jy, ".csv")), DataFrame(ENS_H2[:, :, jy], :auto), delim=";")
 
         # Elastic demand
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Elastic_demand_el_",jy,".csv")), DataFrame(results["g_ela"][end][:,:,jy],:auto), delim=";");
@@ -131,6 +132,6 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Dual"]["EOM"][:]', :auto), delim=";")
     #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualH2.csv")), DataFrame(ADMM["Residuals"]["Dual"]["H2"][:]', :auto), delim=";")
 
-    plot(1:150, [ADMM["Residuals"]["Primal"]["EOM"][:] ADMM["Residuals"]["Primal"]["H2"][:] ADMM["Residuals"]["Dual"]["EOM"][:] ADMM["Residuals"]["Dual"]["H2"][:]])
+    #plot(1:500, [ADMM["Residuals"]["Primal"]["EOM"][:] ADMM["Residuals"]["Primal"]["H2"][:] ADMM["Residuals"]["Dual"]["EOM"][:] ADMM["Residuals"]["Dual"]["H2"][:]])
 
 end

@@ -17,7 +17,7 @@ function define_common_parameters!(m::String, mod::Model, data::Dict, ts::Dict, 
     mod.ext[:parameters][:W] = [repr_days[jy][!, :weights][jd] for jd in mod.ext[:sets][:JD], jy in mod.ext[:sets][:JY]]      # weights of each representative day
     mod.ext[:parameters][:P] = ones(data["nYears"]) / data["nYears"]    # probability of each scenario - uniform distribution
     mod.ext[:parameters][:γ] = data["gamma"]            # weight of expected revenues and CVAR
-    mod.ext[:parameters][:β] = data["beta"]          # risk aversion parameter - represents the cumulative probability of worst-case scenarios
+    mod.ext[:parameters][:β] = data["beta"]  # beta        # risk aversion parameter - represents the cumulative probability of worst-case scenarios
     mod.ext[:parameters][:σ] = data["sigmaCM"] # switch for the capacity market
     mod.ext[:parameters][:σH] = data["sigmaHCM"] # switch for the capacity market
 

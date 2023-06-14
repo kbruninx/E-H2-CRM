@@ -1,5 +1,5 @@
 ## Topic: Hydrogen market for long-term storage
-# Author: Kenneth Bruninx
+# Author: Alessio Berdin, Kenneth Bruninx
 # Last update: January 2023
 
 ## 0. Set-up code
@@ -12,7 +12,7 @@ HPC = "NA" # NA, DelftBlue or ThinKing
 # Home directory
 const home_dir = @__DIR__
 
-if HPC == "DelftBlue"  # only for running this on DelftBlue -- not relevant for now
+if HPC == "DlftBlue"  # only for running this on DelftBlue -- not relevant for now
     ENV["GRB_LICENSE_FILE"] = "/home/aberdin/gurobi.lic"
     ENV["GUROBI_HOME"] = "/scratch/aberdin/gurobi952/linux64"
     println(string("Number of threads: ", Threads.nthreads()))
@@ -41,6 +41,24 @@ using Base.Threads: @spawn
 using Base: split
 using ArgParse # Parsing arguments from the command line
 
+#if HPC == "DelftBlue"
+#   function parse_commandline()
+#       s = ArgParseSettings()
+#       @add_arg_table! s begin
+#           "—sim_number"
+#               help = "simulation number"
+#               arg_type = Int
+#               default = 1
+#       end
+#       return parse_args(s)
+#   end
+   # Simulation number as argument:
+#   dict_sim =  parse_commandline()
+#   sim_number = dict_sim_number["sim_number"]
+#else
+#    sim_number = 1
+#end
+
 # Gurobi environment to suppress output
 println("Define Gurobi environment...")
 println("        ")
@@ -68,13 +86,20 @@ include(joinpath(home_dir, "Source", "save_results.jl"))
 # Data 
 data = YAML.load_file(joinpath(home_dir, "Input", "overview_data.yaml"))
 
+#if HPC == "DelftBlue"
+#    beta_arr = [1.0 0.9 0.8 0.7 0.6]
+#    beta = beta_arr[sim_number]
+#else
+#    beta = data["General"]["beta"]
+#end
+
 ts = Dict()
 order_matrix = Dict()
 repr_days = Dict()
-# years = Dict(1 => 2021) # deterministic
-# years = Dict(1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020, 5 => 2021, 6 => 2022) # stochastic
+#years = Dict(1 => 2021) # deterministic
+#years = Dict(1 => 2017, 2 => 2018) # stochastic
 # years = Dict(1 => 2021, 2 => 20211) # validation stochastic
-# years = Dict(1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020) # validation CVAR
+#years = Dict(1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020) # validation CVAR
 years = Dict(1 => "2017", 2 => "2017_Hhigh", 3 => "2017_Hlow", 4 => "2018", 5 => "2018_Hhigh", 6 => "2018_Hlow", 7 => "2019", 8 => "2019_Hhigh", 9 => "2019_Hlow", 
 10 => "2020", 11 => "2020_Hhigh", 12 => "2020_Hlow", 13 => "2021", 14 => "2021_Hhigh", 15 => "2021_Hlow", 16 => "2022", 17 => "2022_Hhigh", 18 => "2022_Hlow" )
 
@@ -120,8 +145,8 @@ define_EOM_parameters!(EOM, merge(data["General"], data["EOM"]), ts, repr_days)
 define_H2_parameters!(H2, merge(data["General"], data["H2"]), ts, repr_days)
 
 # Parameters/variables Capacity Market
-CM["D"] =  12.525  # GW
-HCM["D"] = 0 # GW
+CM["D"] = 10.029 # from risk-neutral: 7.514 Biomass + 2.515 H2-turbine GW
+HCM["D"] = 47.611 # from risk-neutral: 33.038 electrolysis + 14.573 storage GW
 
 # Parameters agents
 for m in agents[:ps]

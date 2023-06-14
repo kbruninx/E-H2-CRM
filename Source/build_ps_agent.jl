@@ -30,7 +30,7 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
     if m == "Edemand"
         # Define parameters and expressions
         WTP = mod.ext[:parameters][:WTP]  # willingness to pay ("price cap") of consumers
-        ela = EOM["elasticity"] # section of price-elasticity [MWh]
+        ela = EOM["elasticity"] # section of price-elasticity [10^2 GWh]
 
         # Create variables
         g_VOLL = mod.ext[:variables][:g_VOLL] = @variable(mod, [jh = JH, jd = JD, jy = JY], lower_bound = 0, base_name = "demand")
@@ -86,7 +86,6 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         VC = mod.ext[:parameters][:VC] # variable costs
         IC = mod.ext[:parameters][:IC] # annuity investment costs
         η_H2_E = mod.ext[:parameters][:η_H2_E] # efficiency of hydrogen turbines
-        WTP_HCM = 10000 # random, must be chosen
 
         # Create variables
         cap = mod.ext[:variables][:cap] = @variable(mod, lower_bound = 0, base_name = "capacity")
@@ -104,11 +103,11 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * cap
         + sum(W[jd, jy] * VC * g[jh, jd, jy] for jh in JH, jd in JD)
-        - sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) )
+        - sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD)
+        - σH * λ_HCM * capH_cm)   # capH_cm is negative (demand) so there is a - in front of it 
         
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
         σ * λ_CM * cap_cm
-        - σH * (WTP_HCM - λ_HCM) * capH_cm   # capH_cm is negative (demand) so there is a - in front of it
         + sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) )
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
@@ -127,16 +126,16 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
 
         # Capacity constraint
         mod.ext[:constraints][:cap_limit] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
-        g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 1000 )  # scaling factor needed to go from GW -> TWh
+        g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 100)
 
         if σ == 1
             mod.ext[:constraints][:CM] = @constraint(mod,
             cap_cm <= cap )
         end
 
-        if σH == 1
-            mod.ext[:constraints][:CM] = @constraint(mod,
-            - capH_cm <= cap / η_H2_E)
+        if σH == 1  
+            mod.ext[:constraints][:HCM] = @constraint(mod,
+            - capH_cm >= cap_cm / η_H2_E)    #### Check if it i a + or a -; H2 trbne must offer firm capacity
         end
 
         if γ < 1
@@ -187,7 +186,7 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
 
         # Capacity constraint
         mod.ext[:constraints][:cap_limit] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
-        g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 1000 )  # scaling factor needed to go from GW -> TWh
+        g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 100)
 
         if σ == 1
             mod.ext[:constraints][:CM] = @constraint(mod,
@@ -239,13 +238,7 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
 
         # Capacity constraint
         mod.ext[:constraints][:cap_limit] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
-        g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 1000 )  # scaling factor needed to go from GW -> TWh
-
-        if m == "Solar"
-            mod.ext[:constraints][:solar_limit] = @constraint(mod,
-            cap <= 130)
-        end
-
+        g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 100 )
 
         if γ < 1
             # CVAR constraint

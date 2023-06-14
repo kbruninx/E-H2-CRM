@@ -51,7 +51,8 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         - σ * λ_CM * CM["D"] )
 
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
-        sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy] for jh in JH, jd in JD))
+        sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g_positive[jh, jd, jy] for jh in JH, jd in JD)
+        + σ * λ_CM * CM["D"])
 
         CVAR = mod.ext[:expressions][:CVAR] = @expression(mod,
         α - ((1/β) * sum(P[jy] * u[jy] for jy in JY)) )
@@ -79,7 +80,6 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         VC = mod.ext[:parameters][:VC]
         IC = mod.ext[:parameters][:IC] # overnight investment costs
         η_H2_E = mod.ext[:parameters][:η_H2_E]
-        WTP_HCM = 10000 # random, must be chosen
 
         g = mod.ext[:variables][:g]
         cap = mod.ext[:variables][:cap]
@@ -97,11 +97,11 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
         cost = mod.ext[:expressions][:cost] = @expression(mod, [jy = JY],
         IC * cap
         + sum(W[jd, jy] * VC * g[jh, jd, jy] for jh in JH, jd in JD)
-        - sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD) )
+        - sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD)
+        - σH * λ_HCM * capH_cm)   # capH_cm is negative (demand) so there is a - in front of it 
         
         revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
         σ * λ_CM * cap_cm
-        - σH * (WTP_HCM - λ_HCM) * capH_cm   # capH_cm is negative (demand) so there is a - in front of it
         + sum(W[jd, jy] * λ_EOM[jh, jd, jy] * g[jh, jd, jy] for jh in JH, jd in JD) )
 
         profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
@@ -185,7 +185,7 @@ function solve_ps_agent!(m::String, mod::Model, EOM::Dict)
     else
         
         VC = mod.ext[:parameters][:VC]
-        IC = mod.ext[:parameters][:IC] # overnight investment costs
+        IC = mod.ext[:parameters][:IC]
 
         g = mod.ext[:variables][:g]
         cap = mod.ext[:variables][:cap]

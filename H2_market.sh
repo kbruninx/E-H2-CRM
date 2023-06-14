@@ -5,7 +5,7 @@
 #SBATCH --job-name=H2_market
 #SBATCH --partition=compute
 #SBATCH --account=Education-EEMCS-MSc-SET
-#SBATCH --time=09:00:00
+#SBATCH --time=21:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
 #SBATCH --mem-per-cpu=2GB

@@ -3,7 +3,7 @@ TO_local = TimerOutput()
 # Calculate penalty terms ADMM and update price to most recent value 
 @timeit TO_local "Compute ADMM penalty terms" begin
     if mod.ext[:parameters][:EOM] == 1
-        mod.ext[:parameters][:g_bar] = results["g"][m][end] - 1/(EOM["nAgents"]+1)*ADMM["Imbalances"]["EOM"][end]
+        mod.ext[:parameters][:g_bar] = results["g"][m][end] - 1 / (EOM["nAgents"] + 1) * ADMM["Imbalances"]["EOM"][end]
         mod.ext[:parameters][:λ_EOM] = results["λ"]["EOM"][end] 
         mod.ext[:parameters][:ρ_EOM] = ADMM["ρ"]["EOM"][end]
     end

@@ -4,7 +4,7 @@ function define_ps_parameters!(m::String, mod::Model, data::Dict, ts::Dict, repr
         mod.ext[:parameters][:WTP] = data["WTP"]
     else
         mod.ext[:parameters][:VC] = data["VC"]
-        mod.ext[:parameters][:IC] = data["OC"]/data["Lifetime"] * (1 + data["inflation"])^data["Lifetime"] / (1 + data["discount_rate"])^data["Lifetime"]
+        mod.ext[:parameters][:IC] = (data["discount_rate"] * data["OC"]) / (1 - (1 / ((1 + data["discount_rate"])^data["Lifetime"])))
 
         if m == "H2turbine"
             mod.ext[:parameters][:η_H2_E] = data["efficiency_H2_E"]

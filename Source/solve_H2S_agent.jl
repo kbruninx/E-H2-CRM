@@ -75,12 +75,10 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       # Extract parameters
       IC = mod.ext[:parameters][:IC] # annuity investment costs
       η_E_H2 = mod.ext[:parameters][:η_E_H2] # efficiency electrolysis
-      WTP_CM = 10000 # random, must be chosen
 
       # Decision variables
       capH = mod.ext[:variables][:capH]
       capH_cm = mod.ext[:variables][:capH_cm]
-      cap_cm = mod.ext[:variables][:cap_cm]  # negative, demand
       g = mod.ext[:variables][:g]  # note this is defined as a negative number, consumption
       α = mod.ext[:variables][:α]
       u = mod.ext[:variables][:u]
@@ -96,7 +94,6 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       
       revenue = mod.ext[:expressions][:revenue] = @expression(mod, [jy = JY],
       sum(W[jd, jy] * λ_H2[jh, jd, jy] * gH[jh, jd, jy] for jh in JH, jd in JD)
-      - σ * (WTP_CM - λ_CM) * cap_cm   # cap_cm is negative (demand)
       + σH * λ_HCM * capH_cm)
 
       profit = mod.ext[:expressions][:profit] = @expression(mod, [jy = JY],
@@ -113,7 +110,6 @@ function solve_h2s_agent!(m::String, mod::Model, H2::Dict)
       - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
       + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
       + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
-      + σ * ρ_CM / 2 * (cap_cm - cap_bar)^2
       + σH * ρ_HCM / 2 * (capH_cm - capH_bar)^2
       )
 

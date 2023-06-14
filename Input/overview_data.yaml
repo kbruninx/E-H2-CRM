@@ -6,13 +6,13 @@ General:
   inflation: 0.02
   discount_rate: 0.1
   gamma: 0.5 # weight of risk measure
-  beta: 0.7777777 # risk aversion parametrization
+  beta: 0.7 # risk aversion parametrization
   sigmaCM: 0 # switch for CM
   sigmaHCM: 0 # switch for hydrogen CM
 
 ADMM:
- rho_EOM: 700 # rho ADMM penalty term, EOM
- rho_H2: 700  # rho ADMM penalty term, H2
+ rho_EOM: 1 # rho ADMM penalty term, EOM
+ rho_H2: 1 # rho ADMM penalty term, H2
  rho_CM : 1000 # rho ADMM penalty term, electricity CM
  rho_HCM : 1000 # rho ADMM penalty term, hydrogen CM
  max_iter: 10000 # maximum number of iterations
@@ -26,7 +26,7 @@ EOM:
 H2:
   demand: 50 # baseline demand for hydrogen, mtH2
   conv_factor: 33 # 1 Mt H2 = 33 TWh 
-  elastic_sec_H2: 0.002634 # TWh - check elasticity.xlsm to change it
+  elastic_sec_H2: 0.02634 # 10^2 GWh - check elasticity.xlsm to change it
 
 HydrogenSector: 
 
@@ -35,24 +35,24 @@ HydrogenSector:
    H2: "YES" # participate in the carbon neutral H2 market
    CM: "NO"  # participate in the CM
    HCM: "NO" # participate in the hydrogen CM
-   WTP: 1000  # # 630 for some curtailment NEED REF
+   WTP: 100 # M€/10^2 GWh
 
   electrolysis: # unless stated otherwise, based on EUR-pypsa_data
-   OC: 650 # M€/GW - could be a little bit higher
-   Lifetime: 20 # Years 
+   OC: 500 # 650 # M€/GW
+   Lifetime: 25 # Years 
    efficiency_E_H2: 0.68 # efficiency conversion electricity to hydrogen 
    EOM: "YES" # participates in EOM
    H2: "YES" # participate in the H2 market
    CM: "NO"  # participate in the CM  TO BE CHANGED N YES EVENUALLY, WHEN IT REPRESENTS DEMAND IN CM SIMULATIONS
    HCM: "YES" # participate in the hydrogen CM
 
-  H2storage:
-   VC: 5.5 # M€/TWh could account for cost of electrcity, do we need to include it?
-   OC_cap: 206 # M€/GW 
+  H2storage:  # TNO
+   VC: 0.55 # M€/10^2GWh could account for cost of electrcity, do we need to include it?
+   OC_cap: 203 # EUR/MW # earlier M€/GW 
       # 4200000 eur/t/h = 4200000eur / (33 MWh/t * 1t/h) = 127270 EUR/MW = 130 MEUR/GW -- cost of compressor 
       # 2520000 EUR/ton/h = 2520000 EUR / (33 MWh/t *1t/h) = 76360 MEUR/TW = 76 MEUR/GW -- cost of gas treatment
       # data from TNO 2020 report pag.150-151
-   OC_vol: 500 # MEUR/TWh = 0.5 EUR/kWh -- projected 2030 from EUR_PyPSA
+   OC_vol: 15 # M€/10^2 GWh # 4800 EUR/t = 4800 EUR/t / 33MWh/t = 150 EUR/MWh = 150 MEUR/TWh 
    Lifetime: 40 # Years 
    efficiency_ch: 0.95 # charging efficiency - TNO & Elberry
    efficiency_dh: 0.95 # discharging efficiency - TNO & Elberry
@@ -70,13 +70,13 @@ PowerSector:
     H2: "NO" # participate in the carbon neutral H2 market
     CM: "NO"  # participate in the CM
     HCM: "NO" # participate in the hydrogen CM
-    WTP: 1000 # EUR/MWh = MEUR/TWh
+    WTP: 100 # M€/10^2 GWh EUR/MWh = MEUR/TWh
 
-  H2turbine:    # ref. Hernandez (2021)
-    VC: 2 # MEUR/TWh
-    OC: 1200 # MEUR/GW
-    Lifetime: 20 # years
-    efficiency_H2_E: 0.41 # efficiency conversion hydrogen to electrcity
+  H2turbine:    # ref. Lux (2020)
+    VC: 0.27 # M€/10^2 GWh MEUR/TWh
+    OC: 450 # EUR/MW # MEUR/GW
+    Lifetime: 30 # years
+    efficiency_H2_E: 0.40 # efficiency conversion hydrogen to electrcity
     AF_ts: "NA"
     EOM: "YES" # participates in EOM
     H2: "YES" # participate in the carbon neutral H2 market
@@ -84,8 +84,8 @@ PowerSector:
     HCM: "YES" # participate in the hydrogen CM
 
   Biomass: 
-    VC: 50 # MEUR/TWh 
-    OC: 3381  # MEUR/GW
+    VC: 8.5 # M€/10^2 GWh 70 # MEUR/TWh 
+    OC: 4400 #4500000 #EUR/MW #3381  # MEUR/GW
     Lifetime: 25 # years
     AF_ts: "NA" # key to find time series with historical output
     EOM: "YES" # participates in EOM
@@ -94,8 +94,8 @@ PowerSector:
     HCM: "NO" # participate in the hydrogen CM
 
   Solar:
-    VC: 2 # MEUR/TWh
-    OC: 529 # MEUR/GW
+    VC: 0.2 # M€/10^2 GWh MEUR/TWh
+    OC: 529 # MEUR/GW 
     Lifetime: 35 # years
     AF_ts: "SOLAR" # key to find time series with historical output
     EOM: "YES" # participates in EOM
@@ -104,8 +104,8 @@ PowerSector:
     HCM: "NO" # participate in the hydrogen CM
 
   WindOnshore:
-    VC: 5 # MEUR/TWh
-    OC: 1118 # MEUR/GW
+    VC: 0.5 # M€/10^2 GWh MEUR/TWh
+    OC: 1118 # EUR/MW MEUR/GW
     Lifetime: 25 # years
     AF_ts: "WIND_ONSHORE" # key to find time series with historical output
     EOM: "YES" # participates in EOM
