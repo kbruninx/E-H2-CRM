@@ -7,7 +7,6 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     end
 
     cap = zeros(length(agents[:ps]))
-    #cap = Dict()
     CVAR = zeros(length(agents[:ps]))
     VAR = zeros(length(agents[:ps]))
     mm = 1
@@ -18,9 +17,9 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
         CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("Costs",agents[:ps][mm],".csv")),DataFrame(transpose(value.(mdict[m].ext[:expressions][:cost]).data),:auto), delim=";");
 
         if m == "Edemand"
-            cap[m] = 0
-            CVAR[m] = value.(mdict[m].ext[:expressions][:CVAR])
-            VAR[m] = value.(mdict[m].ext[:variables][:α])
+            cap[mm] = 0
+            CVAR[mm] = value.(mdict[m].ext[:expressions][:CVAR])
+            VAR[mm] = value.(mdict[m].ext[:variables][:α])
         else
             cap[mm] = value.(mdict[m].ext[:variables][:cap])
             CVAR[mm] = value.(mdict[m].ext[:expressions][:CVAR])
@@ -101,6 +100,7 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
 
     # Capacity market
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("capacity_price.csv")), DataFrame(transpose([results["λ"]["CM"][end]]),:auto), delim=";");
+    CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("H2capacity_price.csv")), DataFrame(transpose([results["λ"]["HCM"][end]]),:auto), delim=";");
 
     mm = 1
     cap_cm = zeros(length(agents[:cm]))
@@ -126,11 +126,11 @@ function save_results(mdict::Dict,EOM::Dict,H2::Dict,ADMM::Dict,results::Dict,da
     end
     CSV.write(joinpath(home_dir,string("Results_",data["nReprDays"],"_repr_days"),string("objective.csv")), DataFrame(agent = collect(keys(obj)), weigthed_obj = collect(values(obj))), delim=";");
 
-    # Chck convergence
-    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("PrimalResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Primal"]["EOM"][:]', :auto), delim=";")
-    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("PrimalResidualH2.csv")), DataFrame(ADMM["Residuals"]["Primal"]["H2"][:]', :auto), delim=";")
-    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Dual"]["EOM"][:]', :auto), delim=";")
-    #CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualH2.csv")), DataFrame(ADMM["Residuals"]["Dual"]["H2"][:]', :auto), delim=";")
+    # Check convergence
+    CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("PrimalResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Primal"]["EOM"][:]', :auto), delim=";")
+    CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("PrimalResidualH2.csv")), DataFrame(ADMM["Residuals"]["Primal"]["H2"][:]', :auto), delim=";")
+    CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualEOM.csv")), DataFrame(ADMM["Residuals"]["Dual"]["EOM"][:]', :auto), delim=";")
+    CSV.write(joinpath(home_dir, string("Results_", data["nReprDays"], "_repr_days"), string("DualResidualH2.csv")), DataFrame(ADMM["Residuals"]["Dual"]["H2"][:]', :auto), delim=";")
 
     #plot(1:500, [ADMM["Residuals"]["Primal"]["EOM"][:] ADMM["Residuals"]["Primal"]["H2"][:] ADMM["Residuals"]["Dual"]["EOM"][:] ADMM["Residuals"]["Dual"]["H2"][:]])
 

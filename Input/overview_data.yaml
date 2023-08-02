@@ -5,19 +5,20 @@ General:
   nYears: 18 # years
   inflation: 0.02
   discount_rate: 0.1
-  gamma: 0.5 # weight of risk measure
-  beta: 0.7 # risk aversion parametrization
+  gamma: 1.0 # weight of risk measure
+  beta: 1.0 # risk aversion parametrization
   sigmaCM: 0 # switch for CM
   sigmaHCM: 0 # switch for hydrogen CM
 
 ADMM:
- rho_EOM: 1 # rho ADMM penalty term, EOM
- rho_H2: 1 # rho ADMM penalty term, H2
- rho_CM : 1000 # rho ADMM penalty term, electricity CM
- rho_HCM : 1000 # rho ADMM penalty term, hydrogen CM
+ rho_EOM: 4 # rho ADMM penalty term, EOM
+ rho_H2: 4 # rho ADMM penalty term, H2
+ rho_CM : 100 # rho ADMM penalty term, electricity CM
+ rho_HCM : 100 # rho ADMM penalty term, hydrogen CM
  max_iter: 10000 # maximum number of iterations
  epsilon: 1 # stopping criterion - tolerance on "accuracy" with which the coupling constraints are satisfied, expressed as percentage of initial imbalance (e.g., demand). Applied to dual and primal residuals.
  CircularBufferSize: 2 # number of iterations for which data will be retained, should be at least 2 and less than max_iter
+ CircularBufferSizeADMM: 2 # number of iterations for which data will be retained, should be at least 2 and less than max_iter
 
 EOM: 
   SF: 1 # scale factor for sensitivity analysis
@@ -48,8 +49,8 @@ HydrogenSector:
 
   H2storage:  # TNO
    VC: 0.55 # M€/10^2GWh could account for cost of electrcity, do we need to include it?
-   OC_cap: 203 # EUR/MW # earlier M€/GW 
-      # 4200000 eur/t/h = 4200000eur / (33 MWh/t * 1t/h) = 127270 EUR/MW = 130 MEUR/GW -- cost of compressor 
+   OC_cap: 203 # M€/GW 
+      # 4200000 eur/t/h = 4200000eur / (33 MWh/t * 1t/h) = 127270 EUR/MW = 127 MEUR/GW -- cost of compressor 
       # 2520000 EUR/ton/h = 2520000 EUR / (33 MWh/t *1t/h) = 76360 MEUR/TW = 76 MEUR/GW -- cost of gas treatment
       # data from TNO 2020 report pag.150-151
    OC_vol: 15 # M€/10^2 GWh # 4800 EUR/t = 4800 EUR/t / 33MWh/t = 150 EUR/MWh = 150 MEUR/TWh 

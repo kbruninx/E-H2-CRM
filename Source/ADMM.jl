@@ -64,7 +64,7 @@ function ADMM!(results::Dict,ADMM::Dict,EOM::Dict,H2::Dict,mdict::Dict,agents::D
             end
 
             # Check convergence: primal and dual satisfy tolerance 
-            if ADMM["Residuals"]["Primal"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Dual"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Primal"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Dual"]["H2"][end] <= ADMM["Tolerance"]["H2"] && (σ * ADMM["Residuals"]["Primal"]["CM"][end]) <= ADMM["Tolerance"]["CM"] && (σ * ADMM["Residuals"]["Dual"]["CM"][end]) <= ADMM["Tolerance"]["CM"] && (σ * ADMM["Residuals"]["Primal"]["HCM"][end]) <= ADMM["Tolerance"]["HCM"] && (σ * ADMM["Residuals"]["Dual"]["HCM"][end]) <= ADMM["Tolerance"]["HCM"]
+            if ADMM["Residuals"]["Primal"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Dual"]["EOM"][end] <= ADMM["Tolerance"]["EOM"] && ADMM["Residuals"]["Primal"]["H2"][end] <= ADMM["Tolerance"]["H2"] && ADMM["Residuals"]["Dual"]["H2"][end] <= ADMM["Tolerance"]["H2"] && (σ * ADMM["Residuals"]["Primal"]["CM"][end]) <= ADMM["Tolerance"]["CM"] && (σ * ADMM["Residuals"]["Dual"]["CM"][end]) <= ADMM["Tolerance"]["CM"] && (σH * ADMM["Residuals"]["Primal"]["HCM"][end]) <= ADMM["Tolerance"]["HCM"] && (σH * ADMM["Residuals"]["Dual"]["HCM"][end]) <= ADMM["Tolerance"]["HCM"]
                 convergence = 1
             end
 

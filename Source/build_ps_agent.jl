@@ -38,6 +38,16 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
+        # Warm start
+        #=
+        for jy in JY
+            start_value = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("Elastic_demand_el_", jy, ".csv")), delim=";", DataFrame))
+            for jh in JH, jd in JD, jy in JY
+                set_start_value(g_ela[jh, jd, jy], start_value[jh, jd])
+            end
+        end
+        =#
+
         # Create expressions
         g_positive = mod.ext[:expressions][:g_positive] = @expression(mod, g_VOLL + g_ela)
         g =  mod.ext[:expressions][:g] = @expression(mod, - g_positive)
@@ -95,6 +105,18 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
+
+        # Warm start
+        #=
+        for jy in JY
+            start_value = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("GenerationH2turbine_", jy, ".csv")), delim=";", DataFrame))
+            for jh in JH, jd in JD, jy in JY
+                set_start_value(g[jh, jd, jy], start_value[jh, jd])
+            end
+        end
+        set_start_value(cap, (CSV.read(joinpath(home_dir, "Input", "RA10_elCM", "capacity_ps.csv"), delim=";", DataFrame))[!,:CAP_H2turbine][1])
+        =#
+
         # Create expressions
         gH = mod.ext[:expressions][:gH] = @expression(mod, - g / η_H2_E )
         
@@ -135,7 +157,7 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
 
         if σH == 1  
             mod.ext[:constraints][:HCM] = @constraint(mod,
-            - capH_cm >= cap_cm / η_H2_E)    #### Check if it i a + or a -; H2 trbne must offer firm capacity
+            - capH_cm == cap_cm / η_H2_E)    #### H2 turbine must offer firm capacity
         end
 
         if γ < 1
@@ -158,6 +180,17 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
         
+        # Warm start 
+        #=
+        for jy in JY
+            start_value = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("GenerationBiomass_", jy, ".csv")), delim=";", DataFrame))
+            for jh in JH, jd in JD, jy in JY
+                set_start_value(g[jh, jd, jy], start_value[jh, jd])
+            end
+        end
+        set_start_value(cap, (CSV.read(joinpath(home_dir, "Input", "RA10_elCM", "capacity_ps.csv"), delim=";", DataFrame))[!, :CAP_Biomass][1])
+        =#
+
         # Create expressions
         #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * cap )
 
@@ -212,6 +245,14 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
         
+        # Warm start
+        #for jy in JY
+        #    start_value = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("Generation", m, "_", jy, ".csv")), delim=";", DataFrame))
+        #    for jh in JH, jd in JD, jy in JY
+        #        set_start_value(g[jh, jd, jy], start_value[jh, jd])
+        #    end
+        #end
+
         # Create expressions
         # inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * cap )
 
@@ -239,6 +280,14 @@ function build_ps_agent!(m::String,mod::Model,EOM::Dict)
         # Capacity constraint
         mod.ext[:constraints][:cap_limit] = @constraint(mod, [jh = JH, jd = JD, jy = JY],
         g[jh, jd, jy] <= AF[jh, jd, jy] * cap / 100 )
+
+        #if m == "Solar"
+        #    mod.ext[:constraints][:cap_solar] = @constraint(mod,
+        #        cap == 71.137)
+        #elseif m == "WindOnshore"
+        #    mod.ext[:constraints][:cap_Wind] = @constraint(mod,
+        #        cap == 69.414)
+        #end
 
         if γ < 1
             # CVAR constraint

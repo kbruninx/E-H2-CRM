@@ -38,6 +38,16 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
+        # Warm start
+        #=
+        for jy in JY
+            start_value = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("Elastic_demand_H2_", jy, ".csv")), delim=";", DataFrame))
+            for jh in JH, jd in JD, jy in JY
+                set_start_value(gH_ela[jh, jd, jy], start_value[jh, jd])
+            end
+        end
+        =#
+
         # Create expressions
 
         gH_positive = mod.ext[:expressions][:gH_positive] = @expression(mod, gH_VOLL + gH_ela)
@@ -87,6 +97,17 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
+        # Warm start
+        #=
+        for jy in JY
+            start_value = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("H2Generationelectrolysis_", jy, ".csv")), delim=";", DataFrame)) ./ (-η_E_H2)
+            for jh in JH, jd in JD, jy in JY
+                set_start_value(g[jh, jd, jy], start_value[jh, jd])
+            end
+        end
+        set_start_value(capH, (CSV.read(joinpath(home_dir, "Input", "RA10_elCM", "capacity_h2s.csv"), delim=";", DataFrame))[!, :CAP_electrolysis][1])
+        =#
+
         # Create affine expressions  
         #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC * capH)
         
@@ -108,7 +129,7 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
 
         # Definition of the objective function
         mod.ext[:objective] = @objective(mod, Min,
-        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR +
+        - γ * sum(P[jy] * (revenue[jy] - cost[jy]) for jy in JY) - (1 - γ) * CVAR
         + sum(ρ_EOM / 2 * W[jd, jy] * (g[jh, jd, jy] - g_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         + sum(ρ_H2 / 2 * W[jd, jy] * (gH[jh, jd, jy] - gH_bar[jh, jd, jy])^2 for jh in JH, jd in JD, jy in JY)
         + σH * ρ_HCM / 2 * (capH_cm - capH_bar)^2
@@ -124,7 +145,7 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         # Capacity offered in H2 CM - they offer up to their installed capacity (corrected by thir efficiency to represent true output)
         if σH == 1
             mod.ext[:constraints][:cap_offer] = @constraint(mod,
-            capH_cm <= capH * η_E_H2)
+            capH_cm <= capH * η_E_H2)  # previously no * η_E_H2, since the capacity demand refers alreay to these
         end
 
         if γ < 1
@@ -163,6 +184,20 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
         α = mod.ext[:variables][:α] = @variable(mod, base_name = "VAR")
         u = mod.ext[:variables][:u] = @variable(mod, [jy = JY], lower_bound = 0, base_name = "tail profit difference")  # profit difference of worst-case tail scenarios with respect to the VAR
 
+        # Warm start
+        #=
+        for jy in JY
+            start_value_chH = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("ChargeH2storage_", jy, ".csv")), delim=";", DataFrame))
+            start_value_dhH = Matrix(CSV.read(joinpath(home_dir, "Input", "RA10_elCM", string("DischargeH2storage_", jy, ".csv")), delim=";", DataFrame))
+            for jh in JH, jd in JD, jy in JY
+                set_start_value(chH[jh, jd, jy], start_value_chH[jh, jd])
+                set_start_value(dhH[jh, jd, jy], start_value_dhH[jh, jd])
+            end
+        end
+        set_start_value(capH, (CSV.read(joinpath(home_dir, "Input", "RA10_elCM", "capacity_h2s.csv"), delim=";", DataFrame))[!, :CAP_H2storage][1])
+        set_start_value(volH, (CSV.read(joinpath(home_dir, "Input", "RA10_elCM", "storage_volume.csv"), delim=";", DataFrame))[!, :x1][1])
+        =#
+        
         # Create affine expressions  
         #inv_cost = mod.ext[:expressions][:inv_cost] = @expression(mod, IC_cap * capH + IC_vol * volH)
         gH = mod.ext[:expressions][:gH] = @expression(mod, dhH - chH)
@@ -279,7 +314,7 @@ function build_h2s_agent!(m::String, mod::Model, H2::Dict)
 
         if σH == 1   # capacity offered in the H2 CM (correctd for the discharge efficiency)
             mod.ext[:constraints][:cap_offer] = @constraint(mod,
-            capH_cm <= capH * η_dh)
+            capH_cm <= capH)
         end
     end
 

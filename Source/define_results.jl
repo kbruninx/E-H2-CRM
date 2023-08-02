@@ -64,9 +64,9 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
 
     ADMM["Residuals"] = Dict()
     ADMM["Residuals"]["Primal"] = Dict()
-    ADMM["Residuals"]["Primal"]["EOM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    ADMM["Residuals"]["Primal"]["EOM"] = CircularBuffer{Float64}(data["CircularBufferSizeADMM"])
     push!(ADMM["Residuals"]["Primal"]["EOM"], 0)
-    ADMM["Residuals"]["Primal"]["H2"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    ADMM["Residuals"]["Primal"]["H2"] = CircularBuffer{Float64}(data["CircularBufferSizeADMM"])
     push!(ADMM["Residuals"]["Primal"]["H2"], 0)
     ADMM["Residuals"]["Primal"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(ADMM["Residuals"]["Primal"]["CM"], 0)
@@ -74,9 +74,9 @@ function define_results!(data::Dict, results::Dict, ADMM::Dict, agents::Dict, EO
     push!(ADMM["Residuals"]["Primal"]["HCM"], 0)
 
     ADMM["Residuals"]["Dual"] = Dict()
-    ADMM["Residuals"]["Dual"]["EOM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    ADMM["Residuals"]["Dual"]["EOM"] = CircularBuffer{Float64}(data["CircularBufferSizeADMM"])
     push!(ADMM["Residuals"]["Dual"]["EOM"], 0)
-    ADMM["Residuals"]["Dual"]["H2"] = CircularBuffer{Float64}(data["CircularBufferSize"])
+    ADMM["Residuals"]["Dual"]["H2"] = CircularBuffer{Float64}(data["CircularBufferSizeADMM"])
     push!(ADMM["Residuals"]["Dual"]["H2"], 0)
     ADMM["Residuals"]["Dual"]["CM"] = CircularBuffer{Float64}(data["CircularBufferSize"])
     push!(ADMM["Residuals"]["Dual"]["CM"], 0)

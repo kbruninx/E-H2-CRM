@@ -12,7 +12,7 @@ HPC = "NA" # NA, DelftBlue or ThinKing
 # Home directory
 const home_dir = @__DIR__
 
-if HPC == "DlftBlue"  # only for running this on DelftBlue -- not relevant for now
+if HPC == "DelftBlue"  # only for running this on DelftBlue -- not relevant for now
     ENV["GRB_LICENSE_FILE"] = "/home/aberdin/gurobi.lic"
     ENV["GUROBI_HOME"] = "/scratch/aberdin/gurobi952/linux64"
     println(string("Number of threads: ", Threads.nthreads()))
@@ -146,7 +146,7 @@ define_H2_parameters!(H2, merge(data["General"], data["H2"]), ts, repr_days)
 
 # Parameters/variables Capacity Market
 CM["D"] = 10.029 # from risk-neutral: 7.514 Biomass + 2.515 H2-turbine GW
-HCM["D"] = 47.611 # from risk-neutral: 33.038 electrolysis + 14.573 storage GW
+HCM["D"] = 30.751 # 41.323 # from risk-neutral: (33.038 * 0.68) 22.466 electrolysis GW + 14.573 storage GW - (2.515/0.4) 6.288 GW
 
 # Parameters agents
 for m in agents[:ps]
