@@ -1,8 +1,8 @@
 This code was developed to study the interaction between the power sector, the energy intensive industry and the hydrogen sector on the auctions of the European Emission Trading System, the energy-only electricity market, the hydrogen market. It calculates an equilibrium between a set of representative price-taking agents on these markets and allows enforcing renewable targets and different defnitions of the "additionality" principle (putting requirements on the electricity used in the electrolysis proces). It allows to enforce hydrogen and renewable energy targets. An auctioned fixed premium and hydrogen contract for difference can be applied. It employs an iterative price-search algorithm based on ADMM to calculate this equilibrium iteratively.  The emissions of the energy-intensive industry are represented via marginal abatement cost curves, which can be automatically calibrated to reproduce allowance prices post MSR reform (2019).
 
-The research code accompanies the following paper:
+The research code accompanies the following paper:(to be updated)
 
-## Installation, hardware & software requirements
+## Installation, hardware & software requirements (to be updated)
 ### Installation
 After downloading the repository, no specific installation is required. The user should, however, have the following software installed to be able to execute the program:
 - Julia (https://julialang.org/downloads/)
@@ -34,7 +34,7 @@ If the user does not have any of these programs installed, the installation shou
 ### Hardware requirements 
 No specific hardware is required. Depending on the configuration (number of agents and markets considered), computational effort may significantly increase.
 
-## Running the program
+## Running the program(to be updated)
 ### Input
 There are three places where the user can change the input.
 
@@ -131,8 +131,6 @@ Running the code will generate X output files:
     -   CAP_Alkaline_base_supported: Total installed capacity (in GW) for alkaline electrolysis-based hydrogen production (base load) with government support.
     -   PROD_Alkaline_peak_supported: Annual hydrogen production (in Mt) from alkaline electrolysis (peak load) with government support.
     -   PROD_Alkaline_base_supported: Annual hydrogen production (in Mt) from alkaline electrolysis (base load) with government support.
-
-
 
 ## License
 The software is made available under the MIT license (https://opensource.org/licenses/MIT).
