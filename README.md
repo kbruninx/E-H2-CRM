@@ -32,7 +32,7 @@ If the user does not have any of these programs installed, the installation shou
 ### Hardware requirements 
 No specific hardware is required. Depending on the configuration (number of agents and markets considered), computational effort may significantly increase.
 
-## Running the program(to be updated)
+## Running the program
 ### Input
 The file "overview_data.yaml" contains a number of input parameters that are common to all scenarios. These includes general parameters for the simulation, for the algorithm, and market and technologies parameters.
 
@@ -48,7 +48,7 @@ ALgorithm parameters may require tuning depending on the degree of risk aversion
 ### Executing the code
 The code can be run by executing the "MAIN.jl" file.
 
-### Output & Postprocessing (to be updated)
+### Output & Postprocessing
 Running the code will generate 399 output files, located in the "Results_8_repr_days":
 
     1.   "capacity_h2s.csv": hydrogen installed capacity for each technology (GW)
