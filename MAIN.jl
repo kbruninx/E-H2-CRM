@@ -1,4 +1,4 @@
-## Topic: Hydrogen market for long-term storage
+## Topic: Electricity and Hydrogen market for long-term storage
 # Author: Alessio Berdin, Kenneth Bruninx
 # Last update: August 2023
 
@@ -12,7 +12,7 @@ HPC = "NA" # NA, DelftBlue or ThinKing
 # Home directory
 const home_dir = @__DIR__
 
-#if HPC == "DelftBlue"  # only for running this on DelftBlue -- not relevant for now
+#if HPC == "DelftBlue"  # only for running this on DelftBlue 
 #    ENV["GRB_LICENSE_FILE"] = "/home/aberdin/gurobi.lic"
 #    ENV["GUROBI_HOME"] = "/scratch/aberdin/gurobi952/linux64"
 #    println(string("Number of threads: ", Threads.nthreads()))
