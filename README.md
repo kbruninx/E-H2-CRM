@@ -1,6 +1,6 @@
 This code was developed to study the interaction between the power sector and the hydrogen sector in the context of interdependents energy-only electricity market, hydrogen market and potential capacity remuneration mechanisms for both the energy vectors. It calculates an equilibrium between a set of representative price-taking agents on these markets. It allows to enforce hydrogen and renewable capacity targets. It employs an iterative price-search algorithm based on ADMM to calculate this equilibrium iteratively.
 
-The research code accompanies the following paper: "Risk-aversion and Capacity Remuneration Mechanisms in Electricity-Hydrogen Markets"
+The research code accompanies the following paper: "Risk-aversion and Capacity Remuneration Mechanisms in Electricity-Hydrogen Markets". 
 
 ## Installation, hardware & software requirements
 ### Installation
