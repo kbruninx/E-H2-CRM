@@ -85,5 +85,4 @@ Running the code will generate the following output files for each run, located 
 The software is made available under the MIT license (https://opensource.org/licenses/MIT).
  
 ## Contributors
-A. Berdin (alessio.berdin1999@gmail.com) 
-K. Bruninx (k.bruninx@tudelft.nl)
+A. Berdin (alessio.berdin1999@gmail.com) and K. Bruninx (k.bruninx@tudelft.nl)
