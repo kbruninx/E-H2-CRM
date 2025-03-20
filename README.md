@@ -27,7 +27,7 @@ The following Julia packages are required:
 - TimerOutputs
 - ArgParse
 
-If the user does not have any of these programs installed, the installation should take less than one hour.
+If the user does not have these programs installed, the installation should take less than one hour.
 
 ### Hardware requirements 
 No specific hardware is required. Depending on the configuration (number of agents and markets considered), computational effort may significantly increase.
@@ -43,13 +43,13 @@ In particular, to obtain the results presented in the paper the user can modify:
 3. The switch "sigmaCM" for the electricity capacity market at line 10, in order to choose if a capacity market for electricity is active (sigmaCM = 1) or not (sigmaCM = 0).
 4. The switch "sigmaHCM" for the hydrogen capacity market at line 11, in order to choose if a capacity market for hydrogen is active (sigmaHCM = 1) or not (sigmaHCM = 0).
 
-ALgorithm parameters may require tuning depending on the degree of risk aversion "beta" chosen.
+The ADMM parameters may require tuning depending on the degree of risk aversion chosen.
 
 ### Executing the code
 The code can be run by executing the "MAIN.jl" file.
 
 ### Output & Postprocessing
-Running the code will generate 399 output files, located in the "Results_8_repr_days":
+Running the code will generate the following output files for each run, located in the "Results_8_repr_days":
 
     1.   "capacity_h2s.csv": hydrogen installed capacity for each technology (GW)
     2.   "capacity_offered_cm.csv": annual power capacity offered in the capacity market for each participating technology (GW)
@@ -85,5 +85,5 @@ Running the code will generate 399 output files, located in the "Results_8_repr_
 The software is made available under the MIT license (https://opensource.org/licenses/MIT).
  
 ## Contributors
-A. Berdin (alessio.berdin1999@gmail.com)
+A. Berdin (alessio.berdin1999@gmail.com) 
 K. Bruninx (k.bruninx@tudelft.nl)
