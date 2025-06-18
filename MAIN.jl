@@ -35,24 +35,6 @@ using Base.Threads: @spawn
 using Base: split
 using ArgParse # Parsing arguments from the command line
 
-#if HPC == "DelftBlue"
-#   function parse_commandline()
-#       s = ArgParseSettings()
-#       @add_arg_table! s begin
-#           "—sim_number"
-#               help = "simulation number"
-#               arg_type = Int
-#               default = 1
-#       end
-#       return parse_args(s)
-#   end
-   # Simulation number as argument:
-#   dict_sim =  parse_commandline()
-#   sim_number = dict_sim_number["sim_number"]
-#else
-#    sim_number = 1
-#end
-
 # Gurobi environment to suppress output
 println("Define Gurobi environment...")
 println("        ")
