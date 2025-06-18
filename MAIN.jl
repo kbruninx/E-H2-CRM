@@ -12,12 +12,6 @@ HPC = "NA" # NA, DelftBlue or ThinKing
 # Home directory
 const home_dir = @__DIR__
 
-#if HPC == "DelftBlue"  # only for running this on DelftBlue 
-#    ENV["GRB_LICENSE_FILE"] = "/home/aberdin/gurobi.lic"
-#    ENV["GUROBI_HOME"] = "/scratch/aberdin/gurobi952/linux64"
-#    println(string("Number of threads: ", Threads.nthreads()))
-#end
-
 # Install
 #import Pkg
 #Pkg.add("Gurobi")
